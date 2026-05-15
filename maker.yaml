@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/schmiddim/freecad-actions/refs/tags/v1.1.0/schemas/maker.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/schmiddim/freecad-actions/refs/tags/v1.2.0/schemas/maker.schema.json
 # Maker Profile
 
 name: "schmiddim"

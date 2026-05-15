@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/schmiddim/freecad-actions/refs/tags/v1.1.0/schemas/cad-gallery.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/schmiddim/freecad-actions/refs/tags/v1.2.0/schemas/cad-gallery.schema.json
 # CAD Gallery Configuration
 # Paths are relative to the repository root
 
