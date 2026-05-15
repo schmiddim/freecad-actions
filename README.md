@@ -6,11 +6,15 @@ Self-hosted 3D model gallery powered by FreeCAD, Three.js and GitHub Pages.
 
 ## Features
 
-- Automatic STL/STEP export from FreeCAD `.FCStd` files
+- Automatic STL export from FreeCAD `.FCStd` files
 - Interactive 3D viewer with Three.js (OrbitControls)
 - Metadata support: descriptions, tags, images, license, external links
 - Tag-based filtering in the gallery view
-- Maker profile with links to MakerWorld, Thingiverse, Printables
+- Download buttons for STL and FCStd files in the detail view
+- Maker profile with About-page and links to GitHub, MakerWorld, Thingiverse, Printables
+- GitHub link with icon in the navigation header
+- Dark/light mode — follows system preference, toggle button on every page
+- Configurable gallery title via `cad-gallery.yaml`
 - Fallback display for models without metadata
 - Fully buildable and testable locally via Makefile + Docker
 
@@ -19,22 +23,26 @@ Self-hosted 3D model gallery powered by FreeCAD, Three.js and GitHub Pages.
 ```
 freecad-files/          # FreeCAD .FCStd source files (flat, no subdirs)
 metadata/               # Model metadata YAML files
-  keycrhonev2.yaml      # Must match FCStd filename (without extension)
+  my-model.yaml         # Must match FCStd filename (without extension)
   images/               # Additional images per model
-    keycrhonev2/
+    my-model/
       photo1.jpg
 schemas/                # JSON Schemas for validation
-  meta.schema.json      # Schema for metadata/*.yaml
-  maker.schema.json   # Schema for maker.yaml
+  cad-gallery.schema.json  # Schema for cad-gallery.yaml
+  maker.schema.json        # Schema for maker.yaml
+  meta.schema.json         # Schema for metadata/*.yaml
 templates/              # Jinja2 HTML templates
   gallery.html          # Gallery overview page
-  detail.html           # Model detail page
+  detail.html           # Model detail page with 3D viewer
+  about.html            # Maker profile page
+  rss.xml               # RSS feed template
+  atom.xml              # Atom feed template
 scripts/                # Build scripts
-  export.py             # FreeCAD -> STL/STEP export
+  export.py             # FreeCAD -> STL export
   build_gallery.py      # Generate HTML gallery from templates + metadata
   validate.py           # Validate YAML files against schemas
-cad-gallery.yaml            # Configuration (paths, directories)
-maker.yaml            # Maker profile (name, bio, links)
+cad-gallery.yaml        # Configuration (paths, gallery title)
+maker.yaml              # Maker profile (name, bio, links) — optional
 Makefile                # Local build targets
 Dockerfile              # FreeCAD Docker image for export
 pyproject.toml          # Python dependencies
@@ -42,16 +50,38 @@ pyproject.toml          # Python dependencies
 
 ## Configuration
 
-Edit `cad-gallery.yaml` to configure paths:
+Edit `cad-gallery.yaml` to configure paths and the gallery title:
 
 ```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/schmiddim/freecad-actions/refs/tags/v1.3.0/schemas/cad-gallery.schema.json
+title: "My 3D Models"          # Optional, default: "CAD Gallery"
 freecad_dir: "freecad-files"   # Where your .FCStd files are
 metadata_dir: "metadata"       # Where metadata YAMLs and images are
 output_dir: "gallery"          # Where the HTML gallery is generated
-exports_dir: "exports"         # Where STL/STEP exports go
+exports_dir: "exports"         # Where STL exports go
 ```
 
 If your `.FCStd` files are in the repo root, set `freecad_dir: "."`.
+
+## Maker Profile (Optional)
+
+Create a `maker.yaml` in your repo root to enable the About-page and add your profile links to the navigation:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/schmiddim/freecad-actions/refs/tags/v1.3.0/schemas/maker.schema.json
+name: "Your Name"
+bio: "Short description about you."
+links:
+  github: "https://github.com/..."
+  makerworld: "https://makerworld.com/en/@..."
+  thingiverse: "https://www.thingiverse.com/..."
+  printables: "https://www.printables.com/@..."
+```
+
+When `maker.yaml` is present:
+- An **About** page is generated at `gallery/about.html`
+- An **About** link appears in the header navigation
+- The **GitHub link** (with icon) appears in the header navigation
 
 ## Adding Model Metadata
 
@@ -75,7 +105,7 @@ links:
 
 Place additional images in `metadata/images/{model_name}/`.
 
-Models without metadata will still be displayed with an STL preview and a hint showing which file to create.
+Models without metadata are still displayed with a 3D preview and a hint showing which file to create.
 
 ## Local Development
 
@@ -95,7 +125,7 @@ pip install -e ".[dev]"
 ```bash
 make help          # Show all available targets
 make docker-build  # Build the FreeCAD Docker image
-make export        # Export STL + STEP from FCStd files (via Docker)
+make export        # Export STL from FCStd files (via Docker)
 make gallery       # Build the HTML gallery (no Docker needed)
 make build         # Full build: export + gallery
 make serve         # Build gallery and serve at http://localhost:8000
@@ -107,7 +137,7 @@ make clean         # Remove generated files (exports/ and gallery/)
 
 1. Go to your repo **Settings > Pages**
 2. Set **Source** to **GitHub Actions**
-3. Push to the `master` branch -- the workflow will build and deploy automatically
+3. Push to the `master` branch — the workflow will build and deploy automatically
 
 ## Using as a Reusable GitHub Action
 
@@ -115,7 +145,7 @@ This repository provides a reusable composite action to build CAD galleries from
 
 ### Minimal Setup (External Repo)
 
-All you need is a repo with `.FCStd` files and one workflow file. No `cad-gallery.yaml`, no `templates/`, no `metadata/` -- the action provides sensible defaults for everything.
+All you need is a repo with `.FCStd` files and one workflow file. No `cad-gallery.yaml`, no `templates/`, no `metadata/` — the action provides sensible defaults for everything.
 
 **Your repo structure:**
 
@@ -195,22 +225,21 @@ links:
   printables: "https://www.printables.com/model/..."
 ```
 
-Models without metadata are still displayed with a 3D preview and a hint showing which file to create.
-
 ### Custom Configuration (Optional)
 
 Create a `cad-gallery.yaml` in your repo root to override defaults:
 
 ```yaml
+title: "My 3D Models"     # Gallery headline (default: "CAD Gallery")
 freecad_dir: "."           # Where .FCStd files are (default: ".")
 metadata_dir: "metadata"   # Where metadata YAMLs are (default: "metadata")
 output_dir: "gallery"      # Gallery output directory (default: "gallery")
-exports_dir: "exports"     # STL/STEP export directory (default: "exports")
+exports_dir: "exports"     # STL export directory (default: "exports")
 ```
 
 ### Custom Templates (Optional)
 
-The action ships with default HTML templates. To customize the gallery appearance, create a `templates/` directory in your repo with `gallery.html` and/or `detail.html`. Your templates will take precedence over the defaults.
+The action ships with default HTML templates. To customize the gallery appearance, create a `templates/` directory in your repo with `gallery.html`, `detail.html` and/or `about.html`. Your templates will take precedence over the defaults.
 
 ### Action Inputs
 
@@ -228,8 +257,8 @@ The action ships with default HTML templates. To customize the gallery appearanc
 
 ```yaml
 uses: schmiddim/freecad-actions@v1       # Latest 1.x (recommended)
-uses: schmiddim/freecad-actions@v1.2     # Latest 1.2.x
-uses: schmiddim/freecad-actions@v1.2.3   # Exact version
+uses: schmiddim/freecad-actions@v1.3     # Latest 1.3.x
+uses: schmiddim/freecad-actions@v1.3.0   # Exact version
 ```
 
 ## CI/CD
