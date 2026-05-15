@@ -1,6 +1,6 @@
 """Build the CAD Gallery HTML pages from exported STL files and metadata.
 
-Reads configuration from gallery.yaml, loads metadata from the metadata
+Reads configuration from cad-gallery.yaml, loads metadata from the metadata
 directory, and generates HTML pages using Jinja2 templates.
 """
 
@@ -46,8 +46,8 @@ def safe_print(msg):
 
 
 def load_config():
-    """Load gallery.yaml configuration."""
-    config_path = "gallery.yaml"
+    """Load cad-gallery.yaml configuration."""
+    config_path = "cad-gallery.yaml"
     defaults = {
         "freecad_dir": ".",
         "metadata_dir": "metadata",
@@ -56,7 +56,11 @@ def load_config():
     }
 
     if not os.path.exists(config_path):
-        safe_print("Warning: gallery.yaml not found, using defaults")
+        # Fallback to old name for backwards compatibility
+        config_path = "gallery.yaml"
+
+    if not os.path.exists(config_path):
+        safe_print("Warning: cad-gallery.yaml not found, using defaults")
         return defaults
 
     with open(config_path) as f:
@@ -66,13 +70,12 @@ def load_config():
 
 
 def load_profile():
-    """Load profile.yaml if it exists."""
-    profile_path = "profile.yaml"
-    if not os.path.exists(profile_path):
-        return None
-
-    with open(profile_path) as f:
-        return yaml.safe_load(f)
+    """Load maker.yaml if it exists. Returns None if not found (profile is optional)."""
+    for path in ("maker.yaml", "profile.yaml"):
+        if os.path.exists(path):
+            with open(path) as f:
+                return yaml.safe_load(f)
+    return None
 
 
 def load_metadata(metadata_dir, model_name):

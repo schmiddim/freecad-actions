@@ -39,7 +39,9 @@ def validate_file(yaml_path, schema, schema_name):
 
 def main():
     # Load gallery config to find metadata_dir
-    config_path = "gallery.yaml"
+    config_path = "cad-gallery.yaml"
+    if not os.path.exists(config_path):
+        config_path = "gallery.yaml"  # backwards compatibility
     if os.path.exists(config_path):
         with open(config_path) as f:
             config = yaml.safe_load(f) or {}
@@ -50,17 +52,19 @@ def main():
     errors = 0
     checked = 0
 
-    # Validate profile.yaml
-    profile_schema_path = "schemas/profile.schema.json"
-    profile_path = "profile.yaml"
-    if os.path.exists(profile_path) and os.path.exists(profile_schema_path):
-        print("Validating profile:")
-        profile_schema = load_schema(profile_schema_path)
+    # Validate maker.yaml
+    maker_schema_path = "schemas/maker.schema.json"
+    maker_path = "maker.yaml"
+    if not os.path.exists(maker_path):
+        maker_path = "profile.yaml"  # backwards compatibility
+    if os.path.exists(maker_path) and os.path.exists(maker_schema_path):
+        print("Validating maker profile:")
+        maker_schema = load_schema(maker_schema_path)
         checked += 1
-        if not validate_file(profile_path, profile_schema, "profile"):
+        if not validate_file(maker_path, maker_schema, "maker"):
             errors += 1
     else:
-        print(f"Skipping profile validation (file not found)")
+        print(f"Skipping maker profile validation (file not found)")
 
     # Validate metadata files
     meta_schema_path = "schemas/meta.schema.json"

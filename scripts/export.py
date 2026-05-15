@@ -1,6 +1,6 @@
 """Export FreeCAD .FCStd files to STL and STEP formats.
 
-Reads configuration from gallery.yaml to determine which directory
+Reads configuration from cad-gallery.yaml to determine which directory
 to search for .FCStd files (non-recursive).
 """
 
@@ -22,7 +22,7 @@ else:
 try:
     import yaml
 except ImportError:
-    # Fallback: parse simple key: "value" lines from gallery.yaml
+    # Fallback: parse simple key: "value" lines from cad-gallery.yaml
     yaml = None
 
 
@@ -39,15 +39,19 @@ def safe_print(msg):
 
 
 def load_config():
-    """Load gallery.yaml configuration."""
-    config_path = os.path.join(os.getcwd(), "gallery.yaml")
+    """Load cad-gallery.yaml configuration."""
+    config_path = os.path.join(os.getcwd(), "cad-gallery.yaml")
     defaults = {
         "freecad_dir": ".",
         "exports_dir": "exports",
     }
 
     if not os.path.exists(config_path):
-        safe_print("Warning: gallery.yaml not found, using defaults")
+        # Fallback to old name for backwards compatibility
+        config_path = os.path.join(os.getcwd(), "gallery.yaml")
+
+    if not os.path.exists(config_path):
+        safe_print("Warning: cad-gallery.yaml not found, using defaults")
         return defaults
 
     if yaml:

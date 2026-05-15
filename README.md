@@ -25,7 +25,7 @@ metadata/               # Model metadata YAML files
       photo1.jpg
 schemas/                # JSON Schemas for validation
   meta.schema.json      # Schema for metadata/*.yaml
-  profile.schema.json   # Schema for profile.yaml
+  maker.schema.json   # Schema for maker.yaml
 templates/              # Jinja2 HTML templates
   gallery.html          # Gallery overview page
   detail.html           # Model detail page
@@ -33,8 +33,8 @@ scripts/                # Build scripts
   export.py             # FreeCAD -> STL/STEP export
   build_gallery.py      # Generate HTML gallery from templates + metadata
   validate.py           # Validate YAML files against schemas
-gallery.yaml            # Configuration (paths, directories)
-profile.yaml            # Maker profile (name, bio, links)
+cad-gallery.yaml            # Configuration (paths, directories)
+maker.yaml            # Maker profile (name, bio, links)
 Makefile                # Local build targets
 Dockerfile              # FreeCAD Docker image for export
 pyproject.toml          # Python dependencies
@@ -42,7 +42,7 @@ pyproject.toml          # Python dependencies
 
 ## Configuration
 
-Edit `gallery.yaml` to configure paths:
+Edit `cad-gallery.yaml` to configure paths:
 
 ```yaml
 freecad_dir: "freecad-files"   # Where your .FCStd files are
@@ -115,7 +115,7 @@ This repository provides a reusable composite action to build CAD galleries from
 
 ### Minimal Setup (External Repo)
 
-All you need is a repo with `.FCStd` files and one workflow file. No `gallery.yaml`, no `templates/`, no `metadata/` -- the action provides sensible defaults for everything.
+All you need is a repo with `.FCStd` files and one workflow file. No `cad-gallery.yaml`, no `templates/`, no `metadata/` -- the action provides sensible defaults for everything.
 
 **Your repo structure:**
 
@@ -123,13 +123,13 @@ All you need is a repo with `.FCStd` files and one workflow file. No `gallery.ya
 my-cad-models/
   Model_A.FCStd
   Model_B.FCStd
-  .github/workflows/gallery.yaml
+  .github/workflows/cad-gallery.yaml
 ```
 
 **The workflow file:**
 
 ```yaml
-# .github/workflows/gallery.yaml
+# .github/workflows/cad-gallery.yaml
 name: CAD Gallery
 
 on:
@@ -179,7 +179,7 @@ my-cad-models/
     images/
       Model_A/
         photo1.jpg
-  .github/workflows/gallery.yaml
+  .github/workflows/cad-gallery.yaml
 ```
 
 ```yaml
@@ -199,7 +199,7 @@ Models without metadata are still displayed with a 3D preview and a hint showing
 
 ### Custom Configuration (Optional)
 
-Create a `gallery.yaml` in your repo root to override defaults:
+Create a `cad-gallery.yaml` in your repo root to override defaults:
 
 ```yaml
 freecad_dir: "."           # Where .FCStd files are (default: ".")
