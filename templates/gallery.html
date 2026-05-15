@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }}</title>
+
+  <!-- RSS/Atom Feed Discovery -->
+  <link rel="alternate" type="application/rss+xml" title="RSS Feed" href="rss.xml">
+  <link rel="alternate" type="application/atom+xml" title="Atom Feed" href="atom.xml">
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg: #1a1a2e;
+      --surface: #16213e;
+      --border: #0f3460;
+      --text: #eee;
+      --muted: #94a3b8;
+      --accent: #e94560;
+      --thumb-bg: #0f0f23;
+    }
+    [data-theme="light"] {
+      --bg: #f0f2f5;
+      --surface: #ffffff;
+      --border: #d1d9e0;
+      --text: #1a1a2e;
+      --muted: #64748b;
+      --accent: #e94560;
+      --thumb-bg: #e8eaf0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background 0.2s, color 0.2s;
+    }
+    header {
+      background: var(--surface);
+      padding: 1.5rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    header h1 { font-size: 1.5rem; font-weight: 600; }
+    header nav { display: flex; gap: 1.25rem; align-items: center; }
+    header a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    header a:hover { color: var(--text); }
+    .theme-toggle {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 0.3rem 0.5rem;
+      display: flex;
+      align-items: center;
+      transition: color 0.2s, border-color 0.2s;
+      font-size: 1rem;
+      line-height: 1;
+    }
+    .theme-toggle:hover { color: var(--text); border-color: var(--muted); }
+    .tags-filter {
+      padding: 1rem 2rem;
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+    .tag-btn {
+      background: var(--border);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 0.3rem 0.8rem;
+      border-radius: 16px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+    }
+    .tag-btn:hover, .tag-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+      padding: 2rem;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+    .card {
+      background: var(--surface);
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: 1px solid var(--border);
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+    }
+    .card.hidden { display: none; }
+    .thumbnail {
+      width: 100%;
+      height: 200px;
+      background: var(--thumb-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .thumbnail img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .thumbnail .loading {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+    .card-info {
+      padding: 1rem;
+      border-top: 1px solid var(--border);
+    }
+    .card-info h3 {
+      font-size: 0.9rem;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .card-info p {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.3rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-tags {
+      display: flex;
+      gap: 0.3rem;
+      flex-wrap: wrap;
+      padding: 0 1rem 0.75rem;
+    }
+    .card-tag {
+      font-size: 0.65rem;
+      color: var(--muted);
+      background: var(--border);
+      padding: 0.15rem 0.5rem;
+      border-radius: 10px;
+    }
+    .no-metadata {
+      font-size: 0.7rem;
+      color: var(--accent);
+      padding: 0 1rem 0.75rem;
+      font-style: italic;
+    }
+  </style>
+  <script>
+    // Apply saved or system theme before render to avoid flash
+    (function() {
+      const saved = localStorage.getItem('theme');
+      const preferred = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+      document.documentElement.setAttribute('data-theme', preferred);
+    })();
+  </script>
+</head>
+<body>
+  <header>
+    <h1>{{ title }}</h1>
+    <nav>
+      {% if profile %}
+      <a href="about.html">About</a>
+      {% endif %}
+      {% if profile and profile.links and profile.links.github %}
+      <a href="{{ profile.links.github }}" target="_blank" rel="noopener" title="GitHub">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/>
+        </svg>
+        GitHub
+      </a>
+      {% endif %}
+      <a href="rss.xml" title="Subscribe via RSS">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/>
+        </svg>
+        Subscribe
+      </a>
+      <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark mode" aria-label="Toggle theme">🌙</button>
+    </nav>
+  </header>
+
+  {% if all_tags %}
+  <div class="tags-filter">
+    <button class="tag-btn active" data-tag="all">All</button>
+    {% for tag in all_tags %}
+    <button class="tag-btn" data-tag="{{ tag }}">{{ tag }}</button>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="grid" id="grid">
+    {% for model in models %}
+    <a class="card" href="view/{{ model.name }}.html" data-tags="{{ model.tags | join(',') }}">
+      <div class="thumbnail" id="thumb-{{ loop.index0 }}">
+        <span class="loading">Loading...</span>
+      </div>
+      <div class="card-info">
+        <h3>{{ model.title }}</h3>
+        {% if model.description %}
+        <p>{{ model.description | truncate(100) }}</p>
+        {% endif %}
+      </div>
+      {% if model.tags %}
+      <div class="card-tags">
+        {% for tag in model.tags %}
+        <span class="card-tag">{{ tag }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% if not model.has_metadata %}
+      <div class="no-metadata">No metadata found — add some by creating <code>{{ model.metadata_path }}</code></div>
+      {% endif %}
+    </a>
+    {% endfor %}
+  </div>
+
+<script>
+// Theme toggle
+const toggle = document.getElementById('theme-toggle');
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  toggle.textContent = theme === 'dark' ? '🌙' : '☀️';
+  localStorage.setItem('theme', theme);
+}
+applyTheme(document.documentElement.getAttribute('data-theme'));
+toggle.addEventListener('click', () => {
+  applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+});
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+
+const models = {{ models_json | safe }};
+const loader = new STLLoader();
+
+let thumbRenderer = null;
+let thumbScene = null;
+let thumbCamera = null;
+
+function initThumbRenderer() {
+  thumbRenderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+  thumbRenderer.setSize(400, 300);
+  thumbRenderer.setPixelRatio(1);
+  thumbScene = new THREE.Scene();
+  thumbScene.background = new THREE.Color(
+    document.documentElement.getAttribute('data-theme') === 'light' ? 0xe8eaf0 : 0x0f0f23
+  );
+  thumbCamera = new THREE.PerspectiveCamera(45, 400/300, 0.1, 1000);
+  thumbScene.add(new THREE.AmbientLight(0x404040, 3));
+  const d1 = new THREE.DirectionalLight(0xffffff, 1);
+  d1.position.set(1, 1, 1);
+  thumbScene.add(d1);
+  const d2 = new THREE.DirectionalLight(0xffffff, 0.5);
+  d2.position.set(-1, -1, -1);
+  thumbScene.add(d2);
+}
+
+function renderThumbnail(stlPath, callback) {
+  if (!thumbRenderer) initThumbRenderer();
+  loader.load(stlPath, geometry => {
+    const toRemove = thumbScene.children.filter(c => c.type === 'Mesh');
+    toRemove.forEach(m => thumbScene.remove(m));
+    const material = new THREE.MeshStandardMaterial({ color: 0xe94560, metalness: 0.3, roughness: 0.6 });
+    const mesh = new THREE.Mesh(geometry, material);
+    geometry.computeBoundingBox();
+    const center = geometry.boundingBox.getCenter(new THREE.Vector3());
+    const size = geometry.boundingBox.getSize(new THREE.Vector3());
+    mesh.position.sub(center);
+    mesh.rotation.x = -0.5;
+    mesh.rotation.y = 0.5;
+    thumbScene.add(mesh);
+    thumbCamera.position.set(0, 0, Math.max(size.x, size.y, size.z) * 2.5);
+    thumbCamera.lookAt(0, 0, 0);
+    thumbRenderer.render(thumbScene, thumbCamera);
+    callback(thumbRenderer.domElement.toDataURL('image/png'));
+    geometry.dispose();
+    material.dispose();
+  });
+}
+
+const grid = document.getElementById('grid');
+const cards = grid.querySelectorAll('.card');
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const card = entry.target;
+      const thumb = card.querySelector('.thumbnail');
+      const name = card.href.split('/').pop().replace('.html', '');
+      const model = models.find(m => m.name === name);
+      if (thumb && model && !thumb.dataset.loaded) {
+        thumb.dataset.loaded = 'true';
+        renderThumbnail(model.stl, (dataUrl) => {
+          thumb.innerHTML = `<img src="${dataUrl}" alt="${model.name}">`;
+        });
+      }
+      observer.unobserve(card);
+    }
+  });
+}, { rootMargin: '200px' });
+
+cards.forEach(card => observer.observe(card));
+
+document.querySelectorAll('.tag-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const tag = btn.dataset.tag;
+    cards.forEach(card => {
+      if (tag === 'all') {
+        card.classList.remove('hidden');
+      } else {
+        const cardTags = (card.dataset.tags || '').split(',');
+        card.classList.toggle('hidden', !cardTags.includes(tag));
+      }
+    });
+  });
+});
+</script>
+</body>
+</html>

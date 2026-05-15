@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/schmiddim/freecad-actions/refs/tags/v1.4.0/schemas/cad-gallery.schema.json
+# CAD Gallery Configuration
+# Paths are relative to the repository root
+title: "meine coolen modelle"
+# Directory containing .FCStd files (non-recursive search)
+freecad_dir: "freecad-files"
+
+# Directory containing metadata YAML files and images
+# Metadata files must match the FCStd filename: metadata/{model_name}.yaml
+# Images go in: metadata/images/{model_name}/
+metadata_dir: "metadata"
+
+# Output directory for the generated gallery site
+output_dir: "gallery"
+
+# Directory for exported STL/STEP files
+exports_dir: "exports"

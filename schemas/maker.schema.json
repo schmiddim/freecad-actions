@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Maker Profile",
+  "description": "Profile configuration for the CAD Gallery owner",
+  "type": "object",
+  "required": ["name"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Display name of the maker"
+    },
+    "avatar": {
+      "type": "string",
+      "description": "Path to avatar image relative to the repo root"
+    },
+    "bio": {
+      "type": "string",
+      "description": "Short bio or description (Markdown allowed)"
+    },
+    "links": {
+      "type": "object",
+      "properties": {
+        "makerworld": {
+          "type": "string",
+          "format": "uri",
+          "description": "MakerWorld profile URL"
+        },
+        "thingiverse": {
+          "type": "string",
+          "format": "uri",
+          "description": "Thingiverse profile URL"
+        },
+        "printables": {
+          "type": "string",
+          "format": "uri",
+          "description": "Printables profile URL"
+        },
+        "github": {
+          "type": "string",
+          "format": "uri",
+          "description": "GitHub profile URL"
+        },
+        "website": {
+          "type": "string",
+          "format": "uri",
+          "description": "Personal website URL"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Links to maker profiles and websites"
+    }
+  },
+  "additionalProperties": false
+}

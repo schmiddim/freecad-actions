@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ model.title }} - {{ title }}</title>
+
+  <!-- RSS/Atom Feed Discovery -->
+  <link rel="alternate" type="application/rss+xml" title="RSS Feed" href="../rss.xml">
+  <link rel="alternate" type="application/atom+xml" title="Atom Feed" href="../atom.xml">
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg: #1a1a2e;
+      --surface: #16213e;
+      --border: #0f3460;
+      --text: #eee;
+      --muted: #94a3b8;
+      --accent: #e94560;
+      --viewer-bg: #0f0f23;
+      --btn-bg: #0f3460;
+    }
+    [data-theme="light"] {
+      --bg: #f0f2f5;
+      --surface: #ffffff;
+      --border: #d1d9e0;
+      --text: #1a1a2e;
+      --muted: #64748b;
+      --accent: #e94560;
+      --viewer-bg: #e8eaf0;
+      --btn-bg: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background 0.2s, color 0.2s;
+    }
+    header {
+      background: var(--surface);
+      padding: 1.5rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    header h1 { font-size: 1.5rem; font-weight: 600; }
+    header nav { display: flex; gap: 1.25rem; align-items: center; }
+    header a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    header a:hover { color: var(--text); }
+    .theme-toggle {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 0.3rem 0.5rem;
+      display: flex;
+      align-items: center;
+      transition: color 0.2s, border-color 0.2s;
+      font-size: 1rem;
+      line-height: 1;
+    }
+    .theme-toggle:hover { color: var(--text); border-color: var(--muted); }
+    .btn {
+      background: var(--btn-bg);
+      color: #fff;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      text-decoration: none;
+      transition: opacity 0.2s;
+      display: inline-block;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: var(--accent); }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    .viewer-wrapper {
+      background: var(--surface);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .viewer {
+      width: 100%;
+      height: 70vh;
+      min-height: 400px;
+      background: var(--viewer-bg);
+    }
+    .viewer canvas { width: 100%; height: 100%; }
+    .info {
+      padding: 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .info h2 { font-size: 1.3rem; font-weight: 600; }
+    .info-actions { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+    .description {
+      padding: 1.5rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 0.95rem;
+    }
+    .tags {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      padding: 0 1.5rem 1rem;
+    }
+    .tag {
+      font-size: 0.75rem;
+      color: var(--muted);
+      background: var(--border);
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+    }
+    .external-links {
+      padding: 0 1.5rem 1.5rem;
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .external-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.8rem;
+      padding: 0.3rem 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+    .external-links a:hover { color: var(--text); border-color: var(--accent); }
+    .images-gallery {
+      padding: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+    .images-gallery h3 {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      color: var(--muted);
+    }
+    .images-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .images-grid figure { margin: 0; }
+    .images-grid img {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .images-grid img:hover { transform: scale(1.03); }
+    .images-grid figcaption {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.3rem;
+      text-align: center;
+    }
+    .no-metadata-banner {
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 1rem 1.5rem;
+      margin-bottom: 1.5rem;
+      color: var(--accent);
+      font-size: 0.85rem;
+    }
+    .no-metadata-banner code {
+      background: var(--bg);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+    }
+    .license {
+      padding: 0 1.5rem 1rem;
+      font-size: 0.75rem;
+      color: var(--muted);
+      opacity: 0.7;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1.5rem;
+      gap: 1rem;
+    }
+    .nav .btn { min-width: 120px; text-align: center; }
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 70vh;
+      color: var(--muted);
+    }
+  </style>
+  <script>
+    (function() {
+      const saved = localStorage.getItem('theme');
+      const preferred = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+      document.documentElement.setAttribute('data-theme', preferred);
+    })();
+  </script>
+</head>
+<body>
+  <header>
+    <h1><a href="../index.html" style="color: inherit; text-decoration: none;">{{ title }}</a></h1>
+    <nav>
+      <a href="../index.html">Gallery</a>
+      {% if profile %}
+      <a href="../about.html">About</a>
+      {% endif %}
+      {% if profile and profile.links and profile.links.github %}
+      <a href="{{ profile.links.github }}" target="_blank" rel="noopener" title="GitHub">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/>
+        </svg>
+        GitHub
+      </a>
+      {% endif %}
+      <a href="../rss.xml" title="Subscribe via RSS">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/>
+        </svg>
+        Subscribe
+      </a>
+      <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark mode" aria-label="Toggle theme">🌙</button>
+    </nav>
+  </header>
+
+  <div class="container">
+    {% if not model.has_metadata %}
+    <div class="no-metadata-banner">
+      No metadata found for this model. Add some by creating <code>{{ model.metadata_path }}</code>
+    </div>
+    {% endif %}
+
+    <div class="viewer-wrapper">
+      <div class="viewer" id="viewer">
+        <div class="loading">Loading 3D model...</div>
+      </div>
+      <div class="info">
+        <h2>{{ model.title }}</h2>
+        <div class="info-actions">
+          <a href="../{{ model.stl }}" download class="btn btn-primary">Download STL</a>
+          {% if model.fcstd %}
+          <a href="../{{ model.fcstd }}" download class="btn">Download FCStd</a>
+          {% endif %}
+        </div>
+      </div>
+      {% if model.description %}
+      <div class="description">{{ model.description }}</div>
+      {% endif %}
+      {% if model.tags %}
+      <div class="tags">
+        {% for tag in model.tags %}
+        <span class="tag">{{ tag }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% if model.links %}
+      <div class="external-links">
+        {% for platform, url in model.links.items() %}
+        <a href="{{ url }}" target="_blank" rel="noopener">{{ platform }}</a>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% if model.license %}
+      <div class="license">License: {{ model.license }}</div>
+      {% endif %}
+      {% if model.images %}
+      <div class="images-gallery">
+        <h3>Photos</h3>
+        <div class="images-grid">
+          {% for img in model.images %}
+          <figure>
+            <img src="../images/{{ model.name }}/{{ img.filename }}" alt="{{ img.caption or model.title }}" loading="lazy">
+            {% if img.caption %}
+            <figcaption>{{ img.caption }}</figcaption>
+            {% endif %}
+          </figure>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="nav">
+      {% if prev_model %}
+      <a href="{{ prev_model.name }}.html" class="btn">Previous</a>
+      {% else %}
+      <span></span>
+      {% endif %}
+      <a href="../index.html" class="btn">Back to Gallery</a>
+      {% if next_model %}
+      <a href="{{ next_model.name }}.html" class="btn">Next</a>
+      {% else %}
+      <span></span>
+      {% endif %}
+    </div>
+  </div>
+
+<script>
+const toggle = document.getElementById('theme-toggle');
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  toggle.textContent = theme === 'dark' ? '🌙' : '☀️';
+  localStorage.setItem('theme', theme);
+}
+applyTheme(document.documentElement.getAttribute('data-theme'));
+toggle.addEventListener('click', () => {
+  applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+});
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const container = document.getElementById('viewer');
+const width = container.clientWidth;
+const height = container.clientHeight;
+
+const scene = new THREE.Scene();
+const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+scene.background = new THREE.Color(isLight ? 0xe8eaf0 : 0x0f0f23);
+
+const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 10000);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(width, height);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+container.innerHTML = '';
+container.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+
+scene.add(new THREE.AmbientLight(0x404040, 3));
+const d1 = new THREE.DirectionalLight(0xffffff, 1);
+d1.position.set(1, 1, 1);
+scene.add(d1);
+const d2 = new THREE.DirectionalLight(0xffffff, 0.5);
+d2.position.set(-1, -1, -1);
+scene.add(d2);
+
+const loader = new STLLoader();
+loader.load('../{{ model.stl }}', geometry => {
+  const material = new THREE.MeshStandardMaterial({ color: 0xe94560, metalness: 0.3, roughness: 0.6 });
+  const mesh = new THREE.Mesh(geometry, material);
+  geometry.computeBoundingBox();
+  const center = geometry.boundingBox.getCenter(new THREE.Vector3());
+  const size = geometry.boundingBox.getSize(new THREE.Vector3());
+  mesh.position.sub(center);
+  scene.add(mesh);
+  camera.position.set(0, 0, Math.max(size.x, size.y, size.z) * 2.5);
+  controls.update();
+});
+
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate();
+
+window.addEventListener('resize', () => {
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+});
+</script>
+</body>
+</html>

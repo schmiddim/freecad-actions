@@ -1,0 +1,114 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CAD Gallery Discovery",
+  "description": "Machine-readable discovery document published at gallery/.well-known/cad-gallery.json",
+  "type": "object",
+  "required": ["version", "generator", "gallery", "models"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version of this discovery document",
+      "example": "1"
+    },
+    "generator": {
+      "type": "string",
+      "const": "freecad-actions",
+      "description": "Name of the tool that generated this document"
+    },
+    "generator_version": {
+      "type": "string",
+      "description": "Version/ref of the generator (e.g. git tag or 'dev')"
+    },
+    "git_source_url": {
+      "type": ["string", "null"],
+      "description": "HTTPS URL of the source code repository",
+      "example": "https://github.com/schmiddim/freecad-actions"
+    },
+    "profile": {
+      "type": ["object", "null"],
+      "description": "Maker profile from maker.yaml (omitted if not present)",
+      "properties": {
+        "name": { "type": "string" },
+        "bio": { "type": "string" },
+        "links": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "gallery": {
+      "type": "object",
+      "required": ["url", "feed_rss", "feed_atom", "model_count", "last_updated"],
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "Base URL of the gallery (e.g. https://user.github.io/repo)"
+        },
+        "feed_rss": {
+          "type": "string",
+          "description": "Absolute URL to the RSS feed"
+        },
+        "feed_atom": {
+          "type": "string",
+          "description": "Absolute URL to the Atom feed"
+        },
+        "model_count": {
+          "type": "integer",
+          "description": "Total number of models in the gallery"
+        },
+        "last_updated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of the last build"
+        }
+      }
+    },
+    "models": {
+      "type": "array",
+      "description": "List of all models in the gallery",
+      "items": {
+        "type": "object",
+        "required": ["name", "title", "url", "stl_url", "updated_at"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Model slug (filename without extension)"
+          },
+          "title": {
+            "type": "string",
+            "description": "Human-readable title"
+          },
+          "url": {
+            "type": "string",
+            "description": "Absolute URL to the detail page"
+          },
+          "stl_url": {
+            "type": "string",
+            "description": "Absolute URL to download the STL file"
+          },
+          "fcstd_url": {
+            "type": ["string", "null"],
+            "description": "Absolute URL to download the FCStd source file (null if unavailable)"
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "license": {
+            "type": ["string", "null"]
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of last file modification"
+          },
+          "links": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=../schemas/meta.schema.json
+# Metadata for keycrhonev2.FCStd
+
+title: "Keychron V2 Case"
+description: "Custom keyboard case designed for the Keychron V2 mechanical keyboard."
+tags:
+  - keyboard
+  - case
+  - keychron
+license: "CC-BY-SA-4.0"
