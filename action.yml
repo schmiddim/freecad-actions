@@ -29,7 +29,6 @@ runs:
         DOCKER_IMAGE: ghcr.io/schmiddim/freecad-actions:latest
         WORKSPACE: ${{ github.workspace }}
       run: |
-        docker pull "${DOCKER_IMAGE}" || true
         ${{ github.action_path }}/scripts/build.sh build
         MODEL_COUNT=$(find gallery/view -name '*.html' 2>/dev/null | wc -l)
         echo "models-count=$MODEL_COUNT" >> "$GITHUB_OUTPUT"

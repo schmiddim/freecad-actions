@@ -13,6 +13,12 @@ WORKSPACE="${WORKSPACE:-$(pwd)}"
 PYTHON="${PYTHON:-$(command -v python3 2>/dev/null || command -v python 2>/dev/null)}"
 
 step_export() {
+    echo "==> Pulling Docker image ${DOCKER_IMAGE}..."
+    if ! docker pull "${DOCKER_IMAGE}" 2>/dev/null; then
+        echo "==> Pull failed, building image locally..."
+        docker build -t "${DOCKER_IMAGE}" "${WORKSPACE}"
+    fi
+
     echo "==> Exporting FCStd files to STL/STEP via Docker..."
     docker run --rm \
         -v "${WORKSPACE}:/workspace" \
