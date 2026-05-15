@@ -151,9 +151,14 @@ def collect_models(config):
         # Build metadata file path hint for the fallback message
         metadata_path = os.path.join(metadata_dir, f"{name}.yaml")
 
+        # Check if FCStd file exists for download link
+        fcstd_path = os.path.join(freecad_dir, f"{name}.FCStd")
+        has_fcstd = os.path.exists(fcstd_path)
+
         model = {
             "name": name,
             "stl": f"models/{name}.stl",
+            "fcstd": f"freecad/{name}.FCStd" if has_fcstd else None,
             "mtime": mtime,
             "title": meta.get("title", name),
             "description": meta.get("description", ""),
@@ -186,15 +191,22 @@ def collect_all_tags(models):
 
 
 def copy_assets(config, metadata_dir):
-    """Copy STL files and metadata images to the output directory."""
+    """Copy STL files, FCStd files and metadata images to the output directory."""
     output_dir = config["output_dir"]
     exports_dir = config["exports_dir"]
+    freecad_dir = config["freecad_dir"]
 
     # Copy STL files
     models_dir = os.path.join(output_dir, "models")
     os.makedirs(models_dir, exist_ok=True)
     for stl in glob.glob(os.path.join(exports_dir, "*.stl")):
         shutil.copy(stl, models_dir)
+
+    # Copy FCStd files
+    freecad_dst = os.path.join(output_dir, "freecad")
+    os.makedirs(freecad_dst, exist_ok=True)
+    for fcstd in glob.glob(os.path.join(freecad_dir, "*.FCStd")):
+        shutil.copy(fcstd, freecad_dst)
 
     # Copy metadata images
     images_src = os.path.join(metadata_dir, "images")
