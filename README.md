@@ -2,7 +2,7 @@
 
 Self-hosted 3D model gallery powered by FreeCAD, Three.js and GitHub Pages.
 
-**Live Demo:** https://schmiddim.github.io/freecad-actions/
+**Live Demo:** https://schmiddim.github.io/freecad-action/
 
 ## Features
 
@@ -56,7 +56,7 @@ pyproject.toml          # Python dependencies
 Edit `cad-gallery.yaml` to configure paths and the gallery title:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/schmiddim/freecad-actions/refs/tags/v1.3.0/schemas/cad-gallery.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/schmiddim/freecad-action/refs/tags/v1.3.0/schemas/cad-gallery.schema.json
 title: "My 3D Models"          # Optional, default: "CAD Gallery"
 freecad_dir: "freecad-files"   # Where your .FCStd files are
 metadata_dir: "metadata"       # Where metadata YAMLs and images are
@@ -71,7 +71,7 @@ If your `.FCStd` files are in the repo root, set `freecad_dir: "."`.
 Create a `maker.yaml` in your repo root to enable the About-page and add your profile links to the navigation:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/schmiddim/freecad-actions/refs/tags/v1.3.0/schemas/maker.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/schmiddim/freecad-action/refs/tags/v1.3.0/schemas/maker.schema.json
 name: "Your Name"
 bio: "Short description about you."
 links:
@@ -102,7 +102,7 @@ To notify an aggregator service after each build, set `send-ping: 'true'` in you
 
 ```yaml
 - name: Build Gallery
-  uses: schmiddim/freecad-actions@v1
+  uses: schmiddim/freecad-action@v1
   with:
     send-ping: 'true'
 ```
@@ -209,7 +209,7 @@ jobs:
           fetch-depth: 0
 
       - name: Build Gallery
-        uses: schmiddim/freecad-actions@v1
+        uses: schmiddim/freecad-action@v1
 
       - uses: actions/configure-pages@v6
 
@@ -283,9 +283,9 @@ The action ships with default HTML templates. To customize the gallery appearanc
 ### Version Pinning
 
 ```yaml
-uses: schmiddim/freecad-actions@v1       # Latest 1.x (recommended)
-uses: schmiddim/freecad-actions@v1.3     # Latest 1.3.x
-uses: schmiddim/freecad-actions@v1.3.0   # Exact version
+uses: schmiddim/freecad-action@v1       # Latest 1.x (recommended)
+uses: schmiddim/freecad-action@v1.3     # Latest 1.3.x
+uses: schmiddim/freecad-action@v1.3.0   # Exact version
 ```
 
 ## CI/CD
@@ -304,5 +304,5 @@ uses: schmiddim/freecad-actions@v1.3.0   # Exact version
 The FreeCAD export container is hosted on GitHub Container Registry:
 
 ```bash
-docker pull ghcr.io/schmiddim/freecad-actions:latest
+docker pull ghcr.io/schmiddim/freecad-action:latest
 ```

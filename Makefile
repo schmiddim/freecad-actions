@@ -1,6 +1,6 @@
 .PHONY: help build serve validate clean
 
-DOCKER_IMAGE ?= ghcr.io/schmiddim/freecad-actions:latest
+DOCKER_IMAGE ?= ghcr.io/schmiddim/freecad-action:latest
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
