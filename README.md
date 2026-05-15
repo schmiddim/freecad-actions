@@ -1,3 +1,4 @@
-
+Link
+https://schmiddim.github.io/freecad-actions/
 # Requirements
-## Github Pages enabled and Source set to Github Actions
+## GitHub Pages enabled and Source set to GitHub Actions
