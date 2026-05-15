@@ -28,10 +28,12 @@ zu STL/STEP exportiert und als interaktive Three.js Gallery auf GitHub Pages dep
 - [x] **Workflow `cad-gallery.yaml` vereinfacht** (nutzt eigene Action, ~30 Zeilen statt ~100)
 - [x] **Docker-Image Build+Push Workflow** (`docker-publish.yaml`)
 - [x] **Release Workflow** mit automatischer GitHub Release Erstellung
+- [x] RSS Feed (`gallery/feed.xml`)
 
 ## Offene Features (Phase 3+)
-
-- [ ] RSS Feed (`gallery/feed.xml`)
+[ ] kann ich hier irgendwie auch tests bauen? 
+[ ] publish mit release trigger
+[ ] server part
 
 ## Projektstruktur
 
