@@ -270,6 +270,7 @@ def build_gallery(config, models, profile):
         models_json=models_json,
         profile=profile,
         all_tags=all_tags,
+        title=config["title"],
     )
     index_path = os.path.join(output_dir, "index.html")
     with open(index_path, "w") as f:
@@ -285,10 +286,24 @@ def build_gallery(config, models, profile):
             model=model,
             prev_model=prev_model,
             next_model=next_model,
+            profile=profile,
+            title=config["title"],
         )
         detail_path = os.path.join(output_dir, "view", f"{model['name']}.html")
         with open(detail_path, "w") as f:
             f.write(detail_html)
+
+    # Render about page (only if profile exists)
+    if profile:
+        about_template = env.get_template("about.html")
+        about_html = about_template.render(
+            profile=profile,
+            title=config["title"],
+        )
+        about_path = os.path.join(output_dir, "about.html")
+        with open(about_path, "w") as f:
+            f.write(about_html)
+        safe_print("About page built: about.html")
 
     safe_print(f"Gallery built: index.html + {len(models)} detail pages in '{output_dir}/'")
 
