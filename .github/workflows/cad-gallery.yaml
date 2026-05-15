@@ -34,6 +34,7 @@ jobs:
         uses: actions/upload-pages-artifact@v5
         with:
           path: ./gallery
+          jekyll: false
 
       - name: Deploy to GitHub Pages
         id: deploy
