@@ -28,42 +28,52 @@ zu STL/STEP exportiert und als interaktive Three.js Gallery auf GitHub Pages dep
 - [x] **Workflow `cad-gallery.yaml` vereinfacht** (nutzt eigene Action, ~30 Zeilen statt ~100)
 - [x] **Docker-Image Build+Push Workflow** (`docker-publish.yaml`)
 - [x] **Release Workflow** mit automatischer GitHub Release Erstellung
-- [x] RSS Feed (`gallery/feed.xml`)
+- [x] RSS Feed (`gallery/rss.xml`) + Atom Feed (`gallery/atom.xml`)
+
+## Umgesetzte Features (Phase 4: Details & Customization)
+
+- [x] **Konfigurierbare Gallery-Headline** via `title`-Feld in `cad-gallery.yaml`
+    - Fallback: `"CAD Gallery"` wenn nicht gesetzt
+    - Titel wird in allen Templates verwendet (Browser-Titel, H1)
+- [x] **About-Page** (`gallery/about.html`)
+    - Generiert aus `maker.yaml`: name, bio, alle Links
+    - Optionales Avatar-Bild
+    - Navigation-Link "About" in Header aller Seiten (nur wenn `maker.yaml` vorhanden)
+    - Kein About-Link und keine About-Page wenn `maker.yaml` fehlt
+- [x] **GitHub-Link im Header** (mit GitHub-Icon, aus `maker.yaml → links.github`)
+    - Auf allen Seiten sichtbar, nur wenn `profile.links.github` gesetzt
+- [x] **Download FCStd in Detail-View**
+    - Button "Download FCStd" neben "Download STL" (nur wenn FCStd-Datei vorhanden)
+    - FCStd-Dateien werden nach `gallery/freecad/` kopiert
+- [x] **Dark/Light-Mode** auf allen Seiten
+    - Erkennt automatisch System-Praeferenz (`prefers-color-scheme`)
+    - Toggle-Button (🌙 / ☀️) im Header
+    - Wahl wird in `localStorage` gespeichert (bleibt nach Reload erhalten)
+    - CSS Custom Properties (`--bg`, `--surface`, `--border`, `--text`, `--muted`, `--accent`)
+    - Kein Flash beim Laden (Theme-Initialisierung im `<head>` vor dem Render)
 
 ## Offene Features (Phase 3+)
-[ ] kann ich hier irgendwie auch tests bauen? 
-[ ] publish mit release trigger
-[ ] server part
 
-## Offene Features (Phase 4: Details & Customization)
-
-[ ] **Konfigurierbare Gallery-Headline** (`cad-gallery.yaml`)
-    - Neues Feld `title` in `cad-gallery.yaml` (z.B. `title: "Meine 3D-Modelle"`)
-    - Fallback: `"CAD Gallery"` wenn nicht gesetzt
-    - Titel wird in allen Templates verwendet (Browser-Titel, H1, RSS-Feed-Titel)
-
-[ ] **About-Page** (`gallery/about.html`)
-    - Generiert aus `maker.yaml`: name, bio, alle Links
-    - Navigation-Link "About" in Header aller Seiten
-    - Links zu MakerWorld, Thingiverse, Printables, GitHub als Buttons/Icons
+- [ ] Tests (z.B. Python unit tests fuer `build_gallery.py`, `validate.py`)
+- [ ] Publish mit Release-Trigger
+- [ ] Server-Teil (Aggregator-Backend)
 
 ## Offene Features (Phase 5: Aggregator-Integration)
 
-[ ] **`gallery/.well-known/cad-gallery.json` generieren** (`build_gallery.py`)
+- [ ] **`gallery/.well-known/cad-gallery.json` generieren** (`build_gallery.py`)
     - Felder: `version`, `generator`, `generator_version` (aus `ACTION_REF` Env)
     - `profile`: name, bio, links (aus `maker.yaml`)
     - `gallery`: url, feed_rss, feed_atom, model_count, last_updated
     - `models[]`: name, title, url, stl, tags, license, updated_at, links
     - Ordner `gallery/.well-known/` wird automatisch angelegt
 
-[ ] **Optionaler Aggregator-Ping in `action.yml`**
+- [ ] **Optionaler Aggregator-Ping in `action.yml`**
     - Neuer Input `aggregator-url` (optional, default leer)
     - Nach Gallery-Build: HTTP POST an `aggregator-url` mit Payload:
       `{ "discovery_url": "<base_url>/.well-known/cad-gallery.json", "repo": "<owner/repo>", "event": "push" }`
     - Ping nur wenn `aggregator-url` gesetzt ist
 
-[ ] **JSON Schema fuer `cad-gallery.json`** (`schemas/discovery.schema.json`)
-    - Versioniertes Schema zur Validierung der Discovery-Datei
+- [ ] **JSON Schema fuer `cad-gallery.json`** (`schemas/discovery.schema.json`)
 
 ## Projektstruktur
 
@@ -73,17 +83,21 @@ metadata/               # Metadaten-YAMLs (Name muss mit FCStd-Dateiname matchen
   images/               # Zusaetzliche Bilder pro Modell
     {modellname}/
 schemas/                # JSON Schemas fuer Validierung
-  meta.schema.json
+  cad-gallery.schema.json
   maker.schema.json
+  meta.schema.json
 templates/              # Jinja2 HTML Templates
-  gallery.html
-  detail.html
+  gallery.html          # Gallery-Uebersicht
+  detail.html           # Einzelansicht mit 3D-Viewer
+  about.html            # Maker-Profilseite
+  rss.xml
+  atom.xml
 scripts/                # Build-Scripts
   export.py             # FreeCAD -> STL/STEP Export
   build_gallery.py      # HTML Gallery generieren
   validate.py           # YAML gegen Schemas validieren
-cad-gallery.yaml            # Konfiguration (Pfade)
-maker.yaml            # Maker-Profil
+cad-gallery.yaml        # Konfiguration (Pfade, Gallery-Titel)
+maker.yaml              # Maker-Profil (optional)
 action.yml              # Reusable Composite GitHub Action
 Makefile                # Lokale Build-Targets
 Dockerfile              # FreeCAD Docker Image (Multi-Stage, GHCR)
@@ -97,13 +111,28 @@ pyproject.toml          # Python Dependencies
 
 ## Konfiguration
 
-`cad-gallery.yaml` steuert alle Pfade. Fuer ein Repo mit FCStd-Dateien im Root:
+`cad-gallery.yaml` steuert alle Pfade und den Gallery-Titel:
 
 ```yaml
-freecad_dir: "."
+# yaml-language-server: $schema=...schemas/cad-gallery.schema.json
+title: "Meine 3D-Modelle"   # optional, Default: "CAD Gallery"
+freecad_dir: "freecad-files"
 metadata_dir: "metadata"
 output_dir: "gallery"
 exports_dir: "exports"
+```
+
+`maker.yaml` definiert das Maker-Profil (optional):
+
+```yaml
+# yaml-language-server: $schema=...schemas/maker.schema.json
+name: "Username"
+bio: "Kurzbeschreibung"
+links:
+  github: "https://github.com/..."
+  makerworld: "https://makerworld.com/..."
+  thingiverse: "https://www.thingiverse.com/..."
+  printables: "https://www.printables.com/..."
 ```
 
 ## Metadaten-Schema
