@@ -4,6 +4,11 @@
   "description": "Configuration for the CAD Gallery build pipeline",
   "type": "object",
   "properties": {
+    "title": {
+      "type": "string",
+      "description": "Gallery title shown in the header and browser tab",
+      "default": "CAD Gallery"
+    },
     "freecad_dir": {
       "type": "string",
       "description": "Directory containing .FCStd files (non-recursive search)",

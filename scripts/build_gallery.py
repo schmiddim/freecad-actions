@@ -66,7 +66,10 @@ def load_config():
     with open(config_path) as f:
         cfg = yaml.safe_load(f) or {}
 
-    return {**defaults, **cfg}
+    merged = {**defaults, **cfg}
+    if not merged.get("title"):
+        merged["title"] = "CAD Gallery"
+    return merged
 
 
 def load_profile():
