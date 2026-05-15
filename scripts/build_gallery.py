@@ -375,6 +375,120 @@ def get_base_url():
     return 'http://localhost:8000'  # Fallback
 
 
+AGGREGATOR_URL = "https://webhook.site/9bcff9a7-e5a5-42ab-835c-ad2fc18d9151"
+
+
+def get_git_source_url():
+    """Derive the HTTPS source URL from the git remote.
+
+    Handles both SSH (git@host:user/repo.git) and HTTPS remotes.
+    Returns None if the remote cannot be determined.
+    """
+    try:
+        result = subprocess.run(
+            ['git', 'remote', 'get-url', 'origin'],
+            capture_output=True, text=True, check=True
+        )
+        remote = result.stdout.strip()
+        if not remote:
+            return None
+
+        # SSH: git@host:user/repo.git  →  https://host/user/repo
+        if remote.startswith('git@'):
+            # git@github.com:user/repo.git
+            remote = remote[len('git@'):]          # github.com:user/repo.git
+            remote = remote.replace(':', '/', 1)   # github.com/user/repo.git
+            remote = remote.rstrip('/')
+            if remote.endswith('.git'):
+                remote = remote[:-4]
+            return f'https://{remote}'
+
+        # HTTPS: https://host/user/repo.git  →  https://host/user/repo
+        if remote.startswith('http://') or remote.startswith('https://'):
+            remote = remote.rstrip('/')
+            if remote.endswith('.git'):
+                remote = remote[:-4]
+            return remote
+
+        return None
+    except Exception:
+        return None
+
+
+def build_discovery(config, models, profile, base_url):
+    """Generate gallery/.well-known/cad-gallery.json discovery document."""
+    output_dir = config["output_dir"]
+    well_known_dir = os.path.join(output_dir, '.well-known')
+    os.makedirs(well_known_dir, exist_ok=True)
+
+    generator_version = os.environ.get('ACTION_REF', 'dev')
+    git_source_url = get_git_source_url()
+    now_iso = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+
+    discovery = {
+        "version": "1",
+        "generator": "freecad-actions",
+        "generator_version": generator_version,
+        "git_source_url": git_source_url,
+        "profile": profile if profile else None,
+        "gallery": {
+            "url": base_url,
+            "feed_rss": f"{base_url}/rss.xml",
+            "feed_atom": f"{base_url}/atom.xml",
+            "model_count": len(models),
+            "last_updated": now_iso,
+        },
+        "models": [
+            {
+                "name": m["name"],
+                "title": m.get("title") or m["name"],
+                "url": f"{base_url}/view/{m['name']}.html",
+                "stl_url": f"{base_url}/{m['stl']}",
+                "fcstd_url": f"{base_url}/{m['fcstd']}" if m.get("fcstd") else None,
+                "tags": m.get("tags") or [],
+                "license": m.get("license") or None,
+                "updated_at": datetime.utcfromtimestamp(m["mtime"]).strftime('%Y-%m-%dT%H:%M:%SZ'),
+                "links": m.get("links") or {},
+            }
+            for m in models
+        ],
+    }
+
+    discovery_path = os.path.join(well_known_dir, 'cad-gallery.json')
+    with open(discovery_path, 'w') as f:
+        json.dump(discovery, f, indent=2)
+    safe_print(f"Discovery document built: .well-known/cad-gallery.json ({len(models)} models)")
+
+
+def ping_aggregator(base_url):
+    """Send a POST ping to the aggregator URL."""
+    import urllib.request
+    import urllib.error
+
+    discovery_url = f"{base_url}/.well-known/cad-gallery.json"
+    git_source_url = get_git_source_url()
+
+    payload = json.dumps({
+        "discovery_url": discovery_url,
+        "git_source_url": git_source_url,
+        "event": "push",
+    }).encode('utf-8')
+
+    req = urllib.request.Request(
+        AGGREGATOR_URL,
+        data=payload,
+        headers={'Content-Type': 'application/json', 'User-Agent': 'freecad-actions'},
+        method='POST',
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            safe_print(f"Aggregator ping sent to {AGGREGATOR_URL} (HTTP {resp.status})")
+    except urllib.error.HTTPError as e:
+        safe_print(f"Aggregator ping failed: HTTP {e.code} {e.reason}")
+    except Exception as e:
+        safe_print(f"Aggregator ping failed: {e}")
+
+
 def build_feeds(config, models, profile):
     """Build RSS and Atom feeds."""
     output_dir = config["output_dir"]
@@ -426,8 +540,13 @@ def main():
         safe_print("No models found. Make sure STL exports exist.")
         return
 
+    base_url = get_base_url()
     build_gallery(config, models, profile)
     build_feeds(config, models, profile)
+    build_discovery(config, models, profile, base_url)
+
+    if os.environ.get('SEND_PING', '').lower() == 'true':
+        ping_aggregator(base_url)
 
 
 if __name__ == "__main__":

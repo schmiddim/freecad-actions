@@ -69,7 +69,7 @@ zu STL/STEP exportiert und als interaktive Three.js Gallery auf GitHub Pages dep
 
 - [ ] **Optionaler Aggregator-Ping in `action.yml`**
     - Neuer Input `aggregator-url` (optional, default leer)
-    - Nach Gallery-Build: HTTP POST an `aggregator-url` mit Payload:
+    - Nach Gallery-Build: HTTP POST an `aggregator-url` mit Payload
       `{ "discovery_url": "<base_url>/.well-known/cad-gallery.json", "repo": "<owner/repo>", "event": "push" }`
     - Ping nur wenn `aggregator-url` gesetzt ist
 

@@ -25,6 +25,7 @@ jobs:
         uses: ./
         with:
           use-docker: 'true'
+          send-ping: 'true'
 
       - name: Setup Pages
         uses: actions/configure-pages@v6

@@ -15,6 +15,8 @@ Self-hosted 3D model gallery powered by FreeCAD, Three.js and GitHub Pages.
 - GitHub link with icon in the navigation header
 - Dark/light mode — follows system preference, toggle button on every page
 - Configurable gallery title via `cad-gallery.yaml`
+- Discovery document at `gallery/.well-known/cad-gallery.json` (machine-readable index)
+- Optional aggregator ping on every build
 - Fallback display for models without metadata
 - Fully buildable and testable locally via Makefile + Docker
 
@@ -31,6 +33,7 @@ schemas/                # JSON Schemas for validation
   cad-gallery.schema.json  # Schema for cad-gallery.yaml
   maker.schema.json        # Schema for maker.yaml
   meta.schema.json         # Schema for metadata/*.yaml
+  discovery.schema.json    # Schema for gallery/.well-known/cad-gallery.json
 templates/              # Jinja2 HTML templates
   gallery.html          # Gallery overview page
   detail.html           # Model detail page with 3D viewer
@@ -82,6 +85,29 @@ When `maker.yaml` is present:
 - An **About** page is generated at `gallery/about.html`
 - An **About** link appears in the header navigation
 - The **GitHub link** (with icon) appears in the header navigation
+
+## Discovery & Aggregator
+
+Every gallery build generates a machine-readable discovery document at:
+
+```
+gallery/.well-known/cad-gallery.json
+```
+
+It contains the gallery metadata, all models (with STL/FCStd URLs, tags, license), the maker profile and the source repository URL. The schema is at [`schemas/discovery.schema.json`](schemas/discovery.schema.json).
+
+### Aggregator Ping
+
+To notify an aggregator service after each build, set `send-ping: 'true'` in your workflow:
+
+```yaml
+- name: Build Gallery
+  uses: schmiddim/freecad-actions@v1
+  with:
+    send-ping: 'true'
+```
+
+The action sends a `POST` request containing `discovery_url`, `git_source_url` and `event: "push"` to a central endpoint. No configuration needed — the endpoint is built into the action.
 
 ## Adding Model Metadata
 
@@ -246,6 +272,7 @@ The action ships with default HTML templates. To customize the gallery appearanc
 | Input | Description | Default |
 |---|---|---|
 | `use-docker` | Use Docker for FreeCAD export (recommended) | `true` |
+| `send-ping` | Send a POST ping to the aggregator after the build | `false` |
 
 ### Action Outputs
 

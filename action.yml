@@ -11,6 +11,10 @@ inputs:
     description: 'Use Docker for FreeCAD export (recommended for consistency)'
     required: false
     default: 'true'
+  send-ping:
+    description: 'Send a POST ping to the aggregator after the gallery build'
+    required: false
+    default: 'false'
 
 outputs:
   models-count:
@@ -29,6 +33,7 @@ runs:
         DOCKER_IMAGE: ghcr.io/schmiddim/freecad-actions:latest
         WORKSPACE: ${{ github.workspace }}
         ACTION_PATH: ${{ github.action_path }}
+        SEND_PING: ${{ inputs.send-ping }}
       run: |
         ${{ github.action_path }}/scripts/build.sh build
         MODEL_COUNT=$(find gallery/view -name '*.html' 2>/dev/null | wc -l)
@@ -70,6 +75,7 @@ runs:
       shell: bash
       env:
         ACTION_PATH: ${{ github.action_path }}
+        SEND_PING: ${{ inputs.send-ping }}
       run: |
         ${{ github.action_path }}/scripts/build.sh gallery
         MODEL_COUNT=$(find gallery/view -name '*.html' 2>/dev/null | wc -l)
