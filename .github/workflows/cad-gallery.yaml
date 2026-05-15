@@ -4,8 +4,8 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 permissions:
-  contents: write      # fuer GitHub Releases (Assets hochladen)
-  pages: write         # fuer GitHub Pages deploy
+  contents: write      # GitHub Releases (Assets hochladen)
+  pages: write         # GitHub Pages deploy
   id-token: write      # Pages OIDC-Auth
 
 on:

@@ -24,7 +24,6 @@ zu STL/STEP exportiert und als interaktive Three.js Gallery auf GitHub Pages dep
 - [ ] RSS Feed (`gallery/feed.xml`)
 - [ ] `action.yml` als reusable GitHub Action definieren
 - [ ] Workflow `cad-gallery.yaml` vereinfachen (eigene Action nutzen statt conda-Setup)
-- [ ] Kleineres Docker-Image (Alpine-basiert statt conda)
 
 ## Projektstruktur
 

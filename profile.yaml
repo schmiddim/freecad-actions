@@ -1,5 +1,5 @@
+# yaml-language-server: $schema=schemas/profile.schema.json
 # Maker Profile
-# See schemas/profile.schema.json for the full schema
 
 name: "schmiddim"
 bio: "3D printing enthusiast sharing FreeCAD models"

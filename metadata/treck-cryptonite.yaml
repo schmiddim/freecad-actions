@@ -1,5 +1,5 @@
+# yaml-language-server: $schema=../schemas/meta.schema.json
 # Metadata for treck-cryptonite.FCStd
-# See schemas/meta.schema.json for the full schema
 
 title: "Trek Cryptonite"
 description: "Trek Cryptonite bicycle component model."
