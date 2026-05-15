@@ -457,6 +457,12 @@ def build_discovery(config, models, profile, base_url):
     discovery_path = os.path.join(well_known_dir, 'cad-gallery.json')
     with open(discovery_path, 'w') as f:
         json.dump(discovery, f, indent=2)
+
+    # Ensure GitHub Pages serves dot-directories (e.g. .well-known/) without Jekyll filtering
+    nojekyll_path = os.path.join(output_dir, '.nojekyll')
+    if not os.path.exists(nojekyll_path):
+        open(nojekyll_path, 'w').close()
+
     safe_print(f"Discovery document built: .well-known/cad-gallery.json ({len(models)} models)")
 
 
