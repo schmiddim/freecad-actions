@@ -11,22 +11,6 @@ inputs:
     description: 'Use Docker for FreeCAD export (recommended for consistency)'
     required: false
     default: 'true'
-  freecad-dir:
-    description: 'Directory containing .FCStd files'
-    required: false
-    default: ''
-  metadata-dir:
-    description: 'Directory containing metadata YAML files'
-    required: false
-    default: ''
-  output-dir:
-    description: 'Output directory for generated gallery'
-    required: false
-    default: ''
-  exports-dir:
-    description: 'Directory for exported STL/STEP files'
-    required: false
-    default: ''
 
 outputs:
   models-count:
@@ -36,18 +20,21 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    # --- Export via Docker ---
-    - name: Export FCStd to STL/STEP (Docker)
+    # --- Export via Docker (same as: make build) ---
+    - name: Export + Build Gallery (Docker)
       if: inputs.use-docker == 'true'
+      id: build-gallery
       shell: bash
+      env:
+        DOCKER_IMAGE: ghcr.io/schmiddim/freecad-actions:latest
+        WORKSPACE: ${{ github.workspace }}
       run: |
-        docker pull ghcr.io/schmiddim/freecad-actions:latest || true
-        docker run --rm \
-          -v "${{ github.workspace }}:/workspace" \
-          ghcr.io/schmiddim/freecad-actions:latest \
-          scripts/export.py
+        docker pull "${DOCKER_IMAGE}" || true
+        ${{ github.action_path }}/scripts/build.sh build
+        MODEL_COUNT=$(find gallery/view -name '*.html' 2>/dev/null | wc -l)
+        echo "models-count=$MODEL_COUNT" >> "$GITHUB_OUTPUT"
 
-    # --- Export via conda (fallback) ---
+    # --- Export via conda (fallback, no Docker) ---
     - name: Install Miniforge
       if: inputs.use-docker != 'true'
       uses: conda-incubator/setup-miniconda@v4
@@ -69,20 +56,16 @@ runs:
       shell: bash -el {0}
       run: mamba install -c conda-forge python=3.12 freecad pyyaml -y --quiet
 
-    - name: Export FCStd to STL/STEP (conda)
+    - name: Export FCStd (conda)
       if: inputs.use-docker != 'true'
       shell: bash -el {0}
       run: freecadcmd scripts/export.py
 
-    # --- Build Gallery ---
-    - name: Install Python dependencies
-      shell: bash
-      run: pip install jinja2 pyyaml
-
-    - name: Build gallery HTML
-      id: build-gallery
+    - name: Build Gallery (conda)
+      if: inputs.use-docker != 'true'
+      id: build-gallery-conda
       shell: bash
       run: |
-        python3 scripts/build_gallery.py
+        ${{ github.action_path }}/scripts/build.sh gallery
         MODEL_COUNT=$(find gallery/view -name '*.html' 2>/dev/null | wc -l)
         echo "models-count=$MODEL_COUNT" >> "$GITHUB_OUTPUT"
