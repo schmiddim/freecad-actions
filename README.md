@@ -113,17 +113,31 @@ make clean         # Remove generated files (exports/ and gallery/)
 
 This repository provides a reusable composite action to build CAD galleries from FreeCAD files.
 
-### Quick Start
+### Minimal Setup (External Repo)
+
+All you need is a repo with `.FCStd` files and one workflow file. No `gallery.yaml`, no `templates/`, no `metadata/` -- the action provides sensible defaults for everything.
+
+**Your repo structure:**
+
+```
+my-cad-models/
+  Model_A.FCStd
+  Model_B.FCStd
+  .github/workflows/gallery.yaml
+```
+
+**The workflow file:**
 
 ```yaml
 # .github/workflows/gallery.yaml
-name: Build Gallery
+name: CAD Gallery
 
 on:
   push:
     branches: [main]
 
 permissions:
+  contents: read
   pages: write
   id-token: write
 
@@ -140,31 +154,69 @@ jobs:
 
       - name: Build Gallery
         uses: schmiddim/freecad-actions@v1
-        with:
-          use-docker: 'true'
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v6
+      - uses: actions/configure-pages@v6
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v5
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: ./gallery
 
-      - name: Deploy to GitHub Pages
-        id: deploy
+      - id: deploy
         uses: actions/deploy-pages@v5
 ```
+
+**Prerequisites:** Enable GitHub Pages in your repo settings (Settings > Pages > Source: GitHub Actions).
+
+### Adding Metadata (Optional)
+
+To add descriptions, tags, images and links to your models, create metadata YAML files:
+
+```
+my-cad-models/
+  Model_A.FCStd
+  metadata/
+    Model_A.yaml        # Must match FCStd filename
+    images/
+      Model_A/
+        photo1.jpg
+  .github/workflows/gallery.yaml
+```
+
+```yaml
+# metadata/Model_A.yaml
+title: "My Cool Model"
+description: "A bracket for mounting stuff."
+tags: [bracket, 3d-print]
+license: "CC-BY-SA-4.0"
+images:
+  - filename: "photo1.jpg"
+    caption: "Printed version"
+links:
+  printables: "https://www.printables.com/model/..."
+```
+
+Models without metadata are still displayed with a 3D preview and a hint showing which file to create.
+
+### Custom Configuration (Optional)
+
+Create a `gallery.yaml` in your repo root to override defaults:
+
+```yaml
+freecad_dir: "."           # Where .FCStd files are (default: ".")
+metadata_dir: "metadata"   # Where metadata YAMLs are (default: "metadata")
+output_dir: "gallery"      # Gallery output directory (default: "gallery")
+exports_dir: "exports"     # STL/STEP export directory (default: "exports")
+```
+
+### Custom Templates (Optional)
+
+The action ships with default HTML templates. To customize the gallery appearance, create a `templates/` directory in your repo with `gallery.html` and/or `detail.html`. Your templates will take precedence over the defaults.
 
 ### Action Inputs
 
 | Input | Description | Default |
 |---|---|---|
 | `use-docker` | Use Docker for FreeCAD export (recommended) | `true` |
-| `freecad-dir` | Directory with .FCStd files | from `gallery.yaml` |
-| `metadata-dir` | Directory with metadata YAMLs | from `gallery.yaml` |
-| `output-dir` | Gallery output directory | from `gallery.yaml` |
-| `exports-dir` | STL/STEP export directory | from `gallery.yaml` |
 
 ### Action Outputs
 

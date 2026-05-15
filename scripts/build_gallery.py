@@ -169,14 +169,47 @@ def copy_assets(config, metadata_dir):
         print(f"Copied images from '{images_src}' to '{images_dst}'")
 
 
+def find_templates_dir():
+    """Find the templates directory.
+
+    Lookup order:
+      1. ./templates  (user's repo has custom templates)
+      2. $ACTION_PATH/templates  (bundled default templates from the action)
+      3. Directory of this script/../templates  (local dev / Makefile usage)
+
+    Returns the first existing path, or raises FileNotFoundError.
+    """
+    candidates = ["templates"]
+
+    action_path = os.environ.get("ACTION_PATH")
+    if action_path:
+        candidates.append(os.path.join(action_path, "templates"))
+
+    # Fallback: relative to this script (for local dev / Makefile)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    candidates.append(os.path.join(script_dir, "..", "templates"))
+
+    for candidate in candidates:
+        resolved = os.path.realpath(candidate)
+        if os.path.isdir(resolved):
+            print(f"Using templates from: {resolved}")
+            return resolved
+
+    raise FileNotFoundError(
+        "No templates directory found. Searched:\n"
+        + "\n".join(f"  - {c}" for c in candidates)
+    )
+
+
 def build_gallery(config, models, profile):
     """Build the gallery HTML pages using Jinja2 templates."""
     output_dir = config["output_dir"]
     metadata_dir = config["metadata_dir"]
 
-    # Setup Jinja2
+    # Setup Jinja2 — find templates in repo or fall back to action defaults
+    templates_dir = find_templates_dir()
     env = Environment(
-        loader=FileSystemLoader("templates"),
+        loader=FileSystemLoader(templates_dir),
         autoescape=False,
     )
 
