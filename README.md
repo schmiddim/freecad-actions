@@ -15,7 +15,7 @@ Self-hosted 3D model gallery powered by FreeCAD, Three.js and GitHub Pages.
 - GitHub link with icon in the navigation header
 - Dark/light mode — follows system preference, toggle button on every page
 - Configurable gallery title via `cad-gallery.yaml`
-- Discovery document at `gallery/.well-known/cad-gallery.json` (machine-readable index)
+- Discovery document at `gallery/discovery/cad-gallery.json` (machine-readable index)
 - Optional aggregator ping on every build
 - Fallback display for models without metadata
 - Fully buildable and testable locally via Makefile + Docker
@@ -91,7 +91,7 @@ When `maker.yaml` is present:
 Every gallery build generates a machine-readable discovery document at:
 
 ```
-gallery/.well-known/cad-gallery.json
+gallery/discovery/cad-gallery.json
 ```
 
 It contains the gallery metadata, all models (with STL/FCStd URLs, tags, license), the maker profile and the source repository URL. The schema is at [`schemas/discovery.schema.json`](schemas/discovery.schema.json).

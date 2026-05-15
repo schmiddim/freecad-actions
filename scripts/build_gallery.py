@@ -416,10 +416,10 @@ def get_git_source_url():
 
 
 def build_discovery(config, models, profile, base_url):
-    """Generate gallery/.well-known/cad-gallery.json discovery document."""
+    """Generate gallery/discovery/cad-gallery.json discovery document."""
     output_dir = config["output_dir"]
-    well_known_dir = os.path.join(output_dir, '.well-known')
-    os.makedirs(well_known_dir, exist_ok=True)
+    discovery_dir = os.path.join(output_dir, 'discovery')
+    os.makedirs(discovery_dir, exist_ok=True)
 
     generator_version = os.environ.get('ACTION_REF', 'dev')
     git_source_url = get_git_source_url()
@@ -454,16 +454,11 @@ def build_discovery(config, models, profile, base_url):
         ],
     }
 
-    discovery_path = os.path.join(well_known_dir, 'cad-gallery.json')
+    discovery_path = os.path.join(discovery_dir, 'cad-gallery.json')
     with open(discovery_path, 'w') as f:
         json.dump(discovery, f, indent=2)
 
-    # Ensure GitHub Pages serves dot-directories (e.g. .well-known/) without Jekyll filtering
-    nojekyll_path = os.path.join(output_dir, '.nojekyll')
-    if not os.path.exists(nojekyll_path):
-        open(nojekyll_path, 'w').close()
-
-    safe_print(f"Discovery document built: .well-known/cad-gallery.json ({len(models)} models)")
+    safe_print(f"Discovery document built: discovery/cad-gallery.json ({len(models)} models)")
 
 
 def ping_aggregator(base_url):
@@ -471,7 +466,7 @@ def ping_aggregator(base_url):
     import urllib.request
     import urllib.error
 
-    discovery_url = f"{base_url}/.well-known/cad-gallery.json"
+    discovery_url = f"{base_url}/discovery/cad-gallery.json"
     git_source_url = get_git_source_url()
 
     payload = json.dumps({
