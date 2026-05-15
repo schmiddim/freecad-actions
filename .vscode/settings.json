@@ -1,0 +1,7 @@
+{
+  "yaml.schemas": {
+    "schemas/meta.schema.json": "metadata/*.yaml",
+    "schemas/maker.schema.json": "maker.yaml",
+    "schemas/cad-gallery.schema.json": "cad-gallery.yaml"
+  }
+}

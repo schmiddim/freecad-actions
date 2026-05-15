@@ -1,4 +1,17 @@
 *.stl
+*.step
 *.amf
 *.FCBak
 .idea
+.*FCStd1
+
+# Python
+__pycache__/
+*.pyc
+
+# Node.js
+node_modules/
+
+# Generated directories
+gallery/
+exports/

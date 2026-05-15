@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../schemas/meta.schema.json
+# Metadata for treck-cryptonite.FCStd
+
+title: "Trek Cryptonite"
+description: "Trek Cryptonite bicycle component model."
+tags:
+  - bicycle
+  - trek
+categories:
+  - sports
+  - parts
+license: "CC-BY-SA-4.0"

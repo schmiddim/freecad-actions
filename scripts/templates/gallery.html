@@ -1,0 +1,94 @@
+{% extends 'partials/base.html' %}
+
+{% set base_path = '' %}
+{% set active_page = 'gallery' %}
+
+{% block nav_links %}
+<a href="index.html" class="nav-link active">Gallery</a>
+{% endblock %}
+
+{% block content %}
+{% if all_categories %}
+<div class="flex gap-3 flex-wrap max-w-7xl mx-auto px-6 pt-6 pb-2">
+  <button class="category-btn active" data-category="all">All Categories</button>
+  {% for category in all_categories %}
+  <button class="category-btn" data-category="{{ category }}">{{ category }}</button>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if all_tags %}
+<div class="flex gap-2 flex-wrap max-w-7xl mx-auto px-6 pb-4">
+  <button class="tag-btn active" data-tag="all">All Tags</button>
+  {% for tag in all_tags %}
+  <button class="tag-btn" data-tag="{{ tag }}">{{ tag }}</button>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-6 p-6 max-w-7xl mx-auto" id="grid">
+  {% for model in models %}
+  <a class="card" href="view/{{ model.name }}.html" data-tags="{{ model.tags | join(',') }}" data-categories="{{ model.categories | join(',') }}">
+    <div class="thumbnail">
+      {% if model.primaryImage %}
+      <img src="{{ model.primaryImage }}" alt="{{ model.title }}" loading="lazy">
+      {% else %}
+      <span class="loading">No preview</span>
+      {% endif %}
+    </div>
+    <div class="card-info">
+      <h3>{{ model.title }}</h3>
+      {% if model.description %}
+      <p>{{ model.description | truncate(100) }}</p>
+      {% endif %}
+    </div>
+    {% if model.tags %}
+    <div class="card-tags">
+      {% for tag in model.tags %}
+      <span class="card-tag">{{ tag }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </a>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Filtering logic
+var cards = document.querySelectorAll('.card');
+var activeCategory = 'all';
+var activeTag = 'all';
+
+function applyFilters() {
+  cards.forEach(function(card) {
+    var cardCategories = (card.dataset.categories || '').split(',').filter(function(c) { return c; });
+    var cardTags = (card.dataset.tags || '').split(',').filter(function(t) { return t; });
+
+    var categoryMatch = activeCategory === 'all' || cardCategories.includes(activeCategory);
+    var tagMatch = activeTag === 'all' || cardTags.includes(activeTag);
+
+    card.classList.toggle('hidden', !(categoryMatch && tagMatch));
+  });
+}
+
+document.querySelectorAll('.category-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.category-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    activeCategory = btn.dataset.category;
+    applyFilters();
+  });
+});
+
+document.querySelectorAll('.tag-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tag-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    activeTag = btn.dataset.tag;
+    applyFilters();
+  });
+});
+</script>
+{% endblock %}

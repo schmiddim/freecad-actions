@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CAD Model Metadata",
+  "description": "Metadata for a FreeCAD model in the CAD Gallery",
+  "type": "object",
+  "required": ["title"],
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Display name of the model"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description text (Markdown allowed)"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true,
+      "description": "Tags for filtering in the gallery view"
+    },
+    "categories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true,
+      "description": "Categories for grouping models (e.g. 'tools', 'toys', 'parts'). Categories provide higher-level organization than tags."
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["filename"],
+        "properties": {
+          "filename": {
+            "type": "string",
+            "description": "Image filename relative to metadata/images/{model_name}/"
+          },
+          "caption": {
+            "type": "string",
+            "description": "Optional image caption"
+          }
+        },
+        "additionalProperties": false
+      },
+      "description": "Additional images shown in the detail view"
+    },
+    "links": {
+      "type": "object",
+      "properties": {
+        "makerworld": {
+          "type": "string",
+          "format": "uri",
+          "description": "Link to the model on MakerWorld"
+        },
+        "thingiverse": {
+          "type": "string",
+          "format": "uri",
+          "description": "Link to the model on Thingiverse"
+        },
+        "printables": {
+          "type": "string",
+          "format": "uri",
+          "description": "Link to the model on Printables"
+        }
+      },
+      "additionalProperties": false,
+      "description": "External links to the model on maker platforms"
+    },
+    "license": {
+      "type": "string",
+      "description": "License identifier, e.g. CC-BY-SA-4.0"
+    },
+    "primaryImage": {
+      "type": "string",
+      "description": "Override for primary preview image. Path relative to gallery root. If not set, defaults to first image from 'images' array or auto-generated thumbnail."
+    }
+  },
+  "additionalProperties": false
+}

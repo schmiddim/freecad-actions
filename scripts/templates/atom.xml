@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>{{ profile.name if profile else 'CAD Gallery' }} - 3D Models</title>
+  <link href="{{ base_url }}/atom.xml" rel="self"/>
+  <link href="{{ base_url }}"/>
+  <updated>{{ models[0].mtime | format_iso8601 if models else now | format_iso8601 }}</updated>
+  <id>{{ base_url }}/</id>
+  <author>
+    <name>{{ profile.name if profile else 'Anonymous' }}</name>
+  </author>
+  {% for model in models %}
+  <entry>
+    <title>{{ model.title | escape }}</title>
+    <link href="{{ base_url }}/view/{{ model.name }}.html"/>
+    <id>{{ base_url }}/view/{{ model.name }}.html</id>
+    <updated>{{ model.mtime | format_iso8601 }}</updated>
+    <summary>{{ model.description | escape }}</summary>
+    {% for tag in model.tags %}
+    <category term="{{ tag | escape }}"/>
+    {% endfor %}
+    <link rel="enclosure" href="{{ base_url }}/models/{{ model.name }}.stl" type="model/stl"/>
+    {% if model.images and model.images[0] %}
+    <link rel="preview" href="{{ base_url }}/images/{{ model.name }}/{{ model.images[0].filename }}" type="image/jpeg"/>
+    {% endif %}
+  </entry>
+  {% endfor %}
+</feed>

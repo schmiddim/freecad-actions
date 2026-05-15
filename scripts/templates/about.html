@@ -1,0 +1,31 @@
+{% extends 'partials/base.html' %}
+
+{% set base_path = '' %}
+{% set active_page = 'about' %}
+
+{% block title %}About - {{ title }}{% endblock %}
+
+{% block nav_links %}
+<a href="index.html" class="nav-link">Gallery</a>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-16 px-6">
+  <div class="bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-xl p-10">
+    {% if profile.avatar %}
+    <img class="avatar" src="{{ profile.avatar }}" alt="{{ profile.name }}">
+    {% endif %}
+    <h2 class="text-2xl font-semibold mb-3">{{ profile.name }}</h2>
+    {% if profile.bio %}
+    <p class="bio">{{ profile.bio }}</p>
+    {% endif %}
+    {% if profile.links %}
+    <div class="links">
+      {% for platform, url in profile.links.items() %}
+      <a href="{{ url }}" target="_blank" rel="noopener">{{ platform }}</a>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

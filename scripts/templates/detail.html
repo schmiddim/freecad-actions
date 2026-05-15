@@ -1,0 +1,351 @@
+{% extends 'partials/base.html' %}
+
+{% set base_path = '../' %}
+{% set active_page = 'detail' %}
+
+{% block title %}{{ model.title }} - {{ title }}{% endblock %}
+
+{% block head_extra %}
+<script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+    }
+  }
+</script>
+{% endblock %}
+
+{% block nav_links %}
+<a href="../index.html" class="nav-link">Gallery</a>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto p-6">
+
+  {% if not model.has_metadata %}
+  <div class="metadata-box">
+    <div class="metadata-box-header" onclick="toggleMetadataBox()">
+      <div class="metadata-box-title">
+        <span class="metadata-box-icon" id="metadata-icon">&#9654;</span>
+        <span>No metadata file found - Click to learn how to add one</span>
+      </div>
+    </div>
+    <div class="metadata-box-content" id="metadata-content">
+      <div class="metadata-box-inner">
+        <h3>How to add metadata for this model</h3>
+        <p>Create a file named <code>metadata/{{ model.name }}.yaml</code> in your repository with the following content:</p>
+
+        <div class="yaml-template"><button class="copy-btn" onclick="copyYamlTemplate(event)">Copy</button><span class="yaml-comment"># yaml-language-server: $schema=https://raw.githubusercontent.com/schmiddim/freecad-action/refs/tags/{{ git_tag }}/schemas/meta.schema.json
+</span><span class="yaml-key">title</span>: <span class="yaml-string">"{{ model.title }}"</span>
+<span class="yaml-key">description</span>: <span class="yaml-string">"Add your description here"</span>
+<span class="yaml-key">tags</span>:
+  - <span class="yaml-string">tag1</span>
+  - <span class="yaml-string">tag2</span>
+<span class="yaml-key">categories</span>:
+  - <span class="yaml-string">category1</span>
+<span class="yaml-key">license</span>: <span class="yaml-string">"CC-BY-SA-4.0"</span>
+
+<span class="yaml-comment"># Optional: links to maker platforms</span>
+<span class="yaml-comment"># links:</span>
+<span class="yaml-comment">#   makerworld: "https://..."</span>
+<span class="yaml-comment">#   printables: "https://..."</span>
+<span class="yaml-comment">#   thingiverse: "https://..."</span>
+
+<span class="yaml-comment"># Optional: additional images (place in metadata/images/{{ model.name }}/)</span>
+<span class="yaml-comment"># images:</span>
+<span class="yaml-comment">#   - filename: "photo1.jpg"</span>
+<span class="yaml-comment">#     caption: "Optional caption"</span></div>
+
+        {% if git_source_url %}
+        <p><strong>Quick option:</strong> Create the file directly on GitHub:</p>
+        <a href="{{ git_source_url }}/new/master?filename=metadata/{{ model.name }}.yaml" target="_blank" rel="noopener" class="github-link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/>
+          </svg>
+          Create {{ model.name }}.yaml on GitHub
+        </a>
+        <p class="text-xs mt-2 opacity-90">After clicking the link, paste the YAML template above into the GitHub editor and commit the file.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="viewer-wrapper">
+    <div class="info">
+      <h2>{{ model.title }}</h2>
+      <div class="info-actions">
+        <a href="../{{ model.stl }}" download class="btn btn-primary">Download STL</a>
+        {% if model.fcstd %}
+        <a href="../{{ model.fcstd }}" download class="btn">Download FCStd</a>
+        {% endif %}
+      </div>
+    </div>
+    {% if model.description %}
+    <div class="description">{{ model.description }}</div>
+    {% endif %}
+    {% if model.tags %}
+    <div class="tags">
+      {% for tag in model.tags %}
+      <span class="tag">{{ tag }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if model.links %}
+    <div class="external-links-wrapper">
+      <div class="external-links-label">Links</div>
+      <div class="external-links">
+        {% for platform, url in model.links.items() %}
+        <a href="{{ url }}" target="_blank" rel="noopener">{{ platform }}</a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    {% if model.license %}
+    <div class="license">License: {{ model.license }}</div>
+    {% endif %}
+
+    {# Combined Gallery: 3D Model + Photos #}
+    <div class="combined-gallery">
+      <div class="gallery-main">
+        {# 3D Viewer (shown by default) #}
+        <div class="viewer in-gallery active" id="viewer">
+          <div class="loading">Loading 3D model...</div>
+        </div>
+
+        {# Photo images (hidden by default) #}
+        {% if model.images %}
+        {% for img in model.images %}
+        <img class="hero-image" src="../images/{{ model.name }}/{{ img.filename }}" alt="{{ img.caption or model.title }}" data-index="{{ loop.index0 }}" onclick="openLightbox({{ loop.index0 }})">
+        {% endfor %}
+        {% endif %}
+      </div>
+
+      {# Thumbnails: 3D + Photos #}
+      <div class="gallery-thumbs">
+        <div class="gallery-thumb-wrapper" onclick="showGalleryItem('3d')">
+          <div class="gallery-thumb is-3d active"></div>
+        </div>
+        {% if model.images %}
+        {% for img in model.images %}
+        <div class="gallery-thumb-wrapper" onclick="showGalleryItem({{ loop.index0 }})">
+          <div class="gallery-thumb">
+            <img src="../images/{{ model.name }}/{{ img.filename }}" alt="{{ img.caption or model.title }}">
+          </div>
+          {% if img.caption %}
+          <div class="gallery-thumb-caption">{{ img.caption }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="nav">
+    {% if prev_model %}
+    <a href="{{ prev_model.name }}.html" class="btn">Previous</a>
+    {% else %}
+    <span></span>
+    {% endif %}
+    <a href="../index.html" class="btn">Back to Gallery</a>
+    {% if next_model %}
+    <a href="{{ next_model.name }}.html" class="btn">Next</a>
+    {% else %}
+    <span></span>
+    {% endif %}
+  </div>
+</div>
+
+{% if model.images %}
+<div id="lightbox" class="lightbox" onclick="closeLightbox()">
+  <span class="lightbox-close">&times;</span>
+  <span class="lightbox-nav prev" onclick="event.stopPropagation(); navigateLightbox(-1)">&#10094;</span>
+  <img id="lightbox-img" src="" alt="">
+  <span class="lightbox-nav next" onclick="event.stopPropagation(); navigateLightbox(1)">&#10095;</span>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{# 3D Viewer #}
+<script type="module">
+import * as THREE from 'three';
+import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+var container = document.getElementById('viewer');
+var width = container.clientWidth;
+var height = container.clientHeight;
+
+var scene = new THREE.Scene();
+var isLight = !document.documentElement.classList.contains('dark');
+scene.background = new THREE.Color(isLight ? 0xe8eaf0 : 0x0f0f23);
+
+var camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 10000);
+var renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(width, height);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+container.innerHTML = '';
+container.appendChild(renderer.domElement);
+
+var controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+
+scene.add(new THREE.AmbientLight(0x404040, 3));
+var d1 = new THREE.DirectionalLight(0xffffff, 1);
+d1.position.set(1, 1, 1);
+scene.add(d1);
+var d2 = new THREE.DirectionalLight(0xffffff, 0.5);
+d2.position.set(-1, -1, -1);
+scene.add(d2);
+
+var loader = new STLLoader();
+loader.load('../{{ model.stl }}', function(geometry) {
+  var material = new THREE.MeshStandardMaterial({ color: 0xe94560, metalness: 0.3, roughness: 0.6 });
+  var mesh = new THREE.Mesh(geometry, material);
+  geometry.computeBoundingBox();
+  var center = geometry.boundingBox.getCenter(new THREE.Vector3());
+  var size = geometry.boundingBox.getSize(new THREE.Vector3());
+  mesh.position.sub(center);
+  scene.add(mesh);
+  camera.position.set(0, 0, Math.max(size.x, size.y, size.z) * 2.5);
+  controls.update();
+});
+
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate();
+
+window.addEventListener('resize', function() {
+  var w = container.clientWidth;
+  var h = container.clientHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+});
+</script>
+
+{# Metadata box + Gallery + Lightbox logic #}
+<script>
+// Metadata box toggle
+function toggleMetadataBox() {
+  var content = document.getElementById('metadata-content');
+  var icon = document.getElementById('metadata-icon');
+
+  if (content.classList.contains('expanded')) {
+    content.classList.remove('expanded');
+    icon.classList.remove('expanded');
+    icon.textContent = '\u25B6';
+  } else {
+    content.classList.add('expanded');
+    icon.classList.add('expanded');
+    icon.textContent = '\u25BC';
+  }
+}
+
+// Copy YAML template to clipboard
+function copyYamlTemplate(event) {
+  event.stopPropagation();
+  var btn = event.target;
+  var yamlTemplate = btn.parentElement;
+
+  var tempDiv = document.createElement('div');
+  tempDiv.innerHTML = yamlTemplate.innerHTML;
+  var copyBtnClone = tempDiv.querySelector('.copy-btn');
+  if (copyBtnClone) copyBtnClone.remove();
+  var text = tempDiv.textContent || tempDiv.innerText;
+
+  navigator.clipboard.writeText(text).then(function() {
+    var originalText = btn.textContent;
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(function() {
+      btn.textContent = originalText;
+      btn.classList.remove('copied');
+    }, 2000);
+  }).catch(function(err) {
+    console.error('Failed to copy:', err);
+    btn.textContent = 'Failed';
+    setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
+  });
+}
+
+// Combined gallery functionality (3D + Photos)
+{% if model.images %}
+var images = {{ model.images | tojson }};
+var modelName = "{{ model.name }}";
+var currentImageIndex = 0;
+{% endif %}
+var currentGalleryItem = '3d';
+
+function showGalleryItem(item) {
+  var viewer = document.getElementById('viewer');
+  var heroImages = document.querySelectorAll('.hero-image');
+  var thumbWrappers = document.querySelectorAll('.gallery-thumb-wrapper');
+
+  viewer.classList.remove('active');
+  heroImages.forEach(function(img) { img.classList.remove('active'); });
+  thumbWrappers.forEach(function(wrapper) {
+    wrapper.querySelector('.gallery-thumb').classList.remove('active');
+  });
+
+  if (item === '3d') {
+    viewer.classList.add('active');
+    thumbWrappers[0].querySelector('.gallery-thumb').classList.add('active');
+    currentGalleryItem = '3d';
+  } else {
+    var photoIndex = parseInt(item);
+    heroImages[photoIndex].classList.add('active');
+    thumbWrappers[photoIndex + 1].querySelector('.gallery-thumb').classList.add('active');
+    currentGalleryItem = photoIndex;
+  }
+}
+
+{% if model.images %}
+function selectImage(index) {
+  showGalleryItem(index);
+}
+
+function openLightbox(index) {
+  currentImageIndex = index;
+  var lightbox = document.getElementById('lightbox');
+  var lightboxImg = document.getElementById('lightbox-img');
+
+  lightboxImg.src = '../images/' + modelName + '/' + images[index].filename;
+  lightboxImg.alt = images[index].caption || "{{ model.title }}";
+  lightbox.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  var lightbox = document.getElementById('lightbox');
+  lightbox.classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function navigateLightbox(direction) {
+  currentImageIndex = (currentImageIndex + direction + images.length) % images.length;
+  var lightboxImg = document.getElementById('lightbox-img');
+  lightboxImg.src = '../images/' + modelName + '/' + images[currentImageIndex].filename;
+  lightboxImg.alt = images[currentImageIndex].caption || "{{ model.title }}";
+  selectImage(currentImageIndex);
+}
+
+document.addEventListener('keydown', function(e) {
+  var lightbox = document.getElementById('lightbox');
+  if (lightbox.classList.contains('active')) {
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') navigateLightbox(-1);
+    if (e.key === 'ArrowRight') navigateLightbox(1);
+  }
+});
+{% endif %}
+</script>
+{% endblock %}
