@@ -109,11 +109,92 @@ make clean         # Remove generated files (exports/ and gallery/)
 2. Set **Source** to **GitHub Actions**
 3. Push to the `master` branch -- the workflow will build and deploy automatically
 
+## Using as a Reusable GitHub Action
+
+This repository provides a reusable composite action to build CAD galleries from FreeCAD files.
+
+### Quick Start
+
+```yaml
+# .github/workflows/gallery.yaml
+name: Build Gallery
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Build Gallery
+        uses: schmiddim/freecad-actions@v1
+        with:
+          use-docker: 'true'
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: ./gallery
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v5
+```
+
+### Action Inputs
+
+| Input | Description | Default |
+|---|---|---|
+| `use-docker` | Use Docker for FreeCAD export (recommended) | `true` |
+| `freecad-dir` | Directory with .FCStd files | from `gallery.yaml` |
+| `metadata-dir` | Directory with metadata YAMLs | from `gallery.yaml` |
+| `output-dir` | Gallery output directory | from `gallery.yaml` |
+| `exports-dir` | STL/STEP export directory | from `gallery.yaml` |
+
+### Action Outputs
+
+| Output | Description |
+|---|---|
+| `models-count` | Number of models exported and built |
+
+### Version Pinning
+
+```yaml
+uses: schmiddim/freecad-actions@v1       # Latest 1.x (recommended)
+uses: schmiddim/freecad-actions@v1.2     # Latest 1.2.x
+uses: schmiddim/freecad-actions@v1.2.3   # Exact version
+```
+
 ## CI/CD
 
-The GitHub Actions workflow (`.github/workflows/cad-gallery.yaml`) runs on every push to `master` or version tags (`v*`):
+### Workflows
 
-1. **export** -- Installs FreeCAD, exports FCStd files to STL + STEP
-2. **build-gallery** -- Generates HTML gallery with metadata
-3. **deploy** -- Deploys to GitHub Pages (on `master`)
-4. **release** -- Creates a GitHub Release with exports (on `v*` tags)
+| Workflow | Trigger | Purpose |
+|---|---|---|
+| `cad-gallery.yaml` | Push to `master` | Build gallery + deploy to GitHub Pages |
+| `docker-publish.yaml` | Push to `master` (Dockerfile changes) or Release | Build + push Docker image to GHCR |
+| `release.yaml` | Version tag (`v*.*.*`) | Create GitHub Release + moving version tags |
+| `dependabot-automerge.yml` | Dependabot PR | Auto-merge dependency updates |
+
+### Docker Image
+
+The FreeCAD export container is hosted on GitHub Container Registry:
+
+```bash
+docker pull ghcr.io/schmiddim/freecad-actions:latest
+```

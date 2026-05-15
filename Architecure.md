@@ -19,11 +19,19 @@ zu STL/STEP exportiert und als interaktive Three.js Gallery auf GitHub Pages dep
 - [x] **JSON Schemas** zur Validierung von Metadaten und Profil
 - [x] **Jinja2 Templates** statt inline HTML in Python
 
-## Offene Features (Phase 2+)
+## Umgesetzte Features (Phase 2: Reusable Action)
+
+- [x] **`action.yml` als reusable Composite Action** (Export + Gallery Build)
+- [x] **Docker Image auf GHCR** (`ghcr.io/schmiddim/freecad-actions`)
+- [x] **Multi-Stage Dockerfile** (kleineres Runtime-Image)
+- [x] **Semantic Versioning** mit automatischen Moving Tags (`v1`, `v1.2`, `v1.2.3`)
+- [x] **Workflow `cad-gallery.yaml` vereinfacht** (nutzt eigene Action, ~30 Zeilen statt ~100)
+- [x] **Docker-Image Build+Push Workflow** (`docker-publish.yaml`)
+- [x] **Release Workflow** mit automatischer GitHub Release Erstellung
+
+## Offene Features (Phase 3+)
 
 - [ ] RSS Feed (`gallery/feed.xml`)
-- [ ] `action.yml` als reusable GitHub Action definieren
-- [ ] Workflow `cad-gallery.yaml` vereinfachen (eigene Action nutzen statt conda-Setup)
 
 ## Projektstruktur
 
@@ -44,9 +52,15 @@ scripts/                # Build-Scripts
   validate.py           # YAML gegen Schemas validieren
 gallery.yaml            # Konfiguration (Pfade)
 profile.yaml            # Maker-Profil
+action.yml              # Reusable Composite GitHub Action
 Makefile                # Lokale Build-Targets
-Dockerfile              # FreeCAD Docker Image
+Dockerfile              # FreeCAD Docker Image (Multi-Stage, GHCR)
 pyproject.toml          # Python Dependencies
+.github/workflows/
+  cad-gallery.yaml      # Gallery Build + Pages Deploy
+  docker-publish.yaml   # Docker Image Build + Push zu GHCR
+  release.yaml          # Semantic Versioning + GitHub Releases
+  dependabot-automerge.yml
 ```
 
 ## Konfiguration
