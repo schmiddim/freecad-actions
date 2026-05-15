@@ -1,0 +1,10 @@
+# Metadata for keycrhonev2.FCStd
+# See schemas/meta.schema.json for the full schema
+
+title: "Keychron V2 Case"
+description: "Custom keyboard case designed for the Keychron V2 mechanical keyboard."
+tags:
+  - keyboard
+  - case
+  - keychron
+license: "CC-BY-SA-4.0"

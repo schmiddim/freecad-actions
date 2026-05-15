@@ -1,12 +1,11 @@
 name: CAD Gallery
-# ~/.config/shell/gh-status.sh
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 permissions:
-  contents: write      # für GitHub Releases (Assets hochladen)
-  pages: write         # für GitHub Pages deploy
+  contents: write      # fuer GitHub Releases (Assets hochladen)
+  pages: write         # fuer GitHub Pages deploy
   id-token: write      # Pages OIDC-Auth
 
 on:
@@ -39,7 +38,7 @@ jobs:
           restore-keys: conda-pkgs-${{ runner.os }}-
 
       - name: Install FreeCAD
-        run: mamba install -c conda-forge python=3.12 freecad -y --quiet
+        run: mamba install -c conda-forge python=3.12 freecad pyyaml -y --quiet
 
       - name: Export STL + STEP
         run: freecadcmd scripts/export.py
@@ -56,10 +55,14 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+
       - uses: actions/download-artifact@v8
         with:
           name: cad-exports
           path: exports/
+
+      - name: Install Python dependencies
+        run: pip install jinja2 pyyaml
 
       - name: Build gallery HTML
         run: python scripts/build_gallery.py

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ model.title }} - CAD Gallery</title>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      min-height: 100vh;
+    }
+    header {
+      background: #16213e;
+      padding: 1.5rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #0f3460;
+    }
+    header h1 { font-size: 1.5rem; font-weight: 600; }
+    header a {
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.2s;
+    }
+    header a:hover { color: #fff; }
+    .btn {
+      background: #0f3460;
+      color: #fff;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      text-decoration: none;
+      transition: background 0.2s;
+      display: inline-block;
+    }
+    .btn:hover { background: #1a4a7a; }
+    .btn-primary { background: #e94560; }
+    .btn-primary:hover { background: #ff6b6b; }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    .viewer-wrapper {
+      background: #0f0f23;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #0f3460;
+    }
+    .viewer {
+      width: 100%;
+      height: 70vh;
+      min-height: 400px;
+    }
+    .viewer canvas {
+      width: 100%;
+      height: 100%;
+    }
+    .info {
+      padding: 1.5rem;
+      border-top: 1px solid #0f3460;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .info h2 {
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+    .description {
+      padding: 1.5rem;
+      border-top: 1px solid #0f3460;
+      color: #c8d6e5;
+      line-height: 1.6;
+      font-size: 0.95rem;
+    }
+    .tags {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      padding: 0 1.5rem 1rem;
+    }
+    .tag {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      background: #0f3460;
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+    }
+    .external-links {
+      padding: 0 1.5rem 1.5rem;
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .external-links a {
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 0.8rem;
+      padding: 0.3rem 0.6rem;
+      border: 1px solid #0f3460;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+    .external-links a:hover {
+      color: #fff;
+      border-color: #e94560;
+    }
+    .images-gallery {
+      padding: 1.5rem;
+      border-top: 1px solid #0f3460;
+    }
+    .images-gallery h3 {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      color: #94a3b8;
+    }
+    .images-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .images-grid figure {
+      margin: 0;
+    }
+    .images-grid img {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid #0f3460;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .images-grid img:hover {
+      transform: scale(1.03);
+    }
+    .images-grid figcaption {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-top: 0.3rem;
+      text-align: center;
+    }
+    .no-metadata-banner {
+      background: #2d1b2e;
+      border: 1px solid #e94560;
+      border-radius: 8px;
+      padding: 1rem 1.5rem;
+      margin-bottom: 1.5rem;
+      color: #e94560;
+      font-size: 0.85rem;
+    }
+    .no-metadata-banner code {
+      background: #1a1a2e;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+    }
+    .license {
+      padding: 0 1.5rem 1rem;
+      font-size: 0.75rem;
+      color: #4a5568;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1.5rem;
+      gap: 1rem;
+    }
+    .nav .btn {
+      min-width: 120px;
+      text-align: center;
+    }
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 70vh;
+      color: #4a5568;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>CAD Gallery</h1>
+  </header>
+
+  <div class="container">
+    {% if not model.has_metadata %}
+    <div class="no-metadata-banner">
+      No metadata found for this model. Add some by creating <code>{{ model.metadata_path }}</code>
+    </div>
+    {% endif %}
+
+    <div class="viewer-wrapper">
+      <div class="viewer" id="viewer">
+        <div class="loading">Loading 3D model...</div>
+      </div>
+      <div class="info">
+        <h2>{{ model.title }}</h2>
+        <a href="../{{ model.stl }}" download class="btn btn-primary">Download STL</a>
+      </div>
+      {% if model.description %}
+      <div class="description">{{ model.description }}</div>
+      {% endif %}
+      {% if model.tags %}
+      <div class="tags">
+        {% for tag in model.tags %}
+        <span class="tag">{{ tag }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% if model.links %}
+      <div class="external-links">
+        {% for platform, url in model.links.items() %}
+        <a href="{{ url }}" target="_blank" rel="noopener">{{ platform }}</a>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% if model.license %}
+      <div class="license">License: {{ model.license }}</div>
+      {% endif %}
+      {% if model.images %}
+      <div class="images-gallery">
+        <h3>Photos</h3>
+        <div class="images-grid">
+          {% for img in model.images %}
+          <figure>
+            <img src="../images/{{ model.name }}/{{ img.filename }}" alt="{{ img.caption or model.title }}" loading="lazy">
+            {% if img.caption %}
+            <figcaption>{{ img.caption }}</figcaption>
+            {% endif %}
+          </figure>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="nav">
+      {% if prev_model %}
+      <a href="{{ prev_model.name }}.html" class="btn">Previous</a>
+      {% else %}
+      <span></span>
+      {% endif %}
+      <a href="../index.html" class="btn">Back to Gallery</a>
+      {% if next_model %}
+      <a href="{{ next_model.name }}.html" class="btn">Next</a>
+      {% else %}
+      <span></span>
+      {% endif %}
+    </div>
+  </div>
+
+<script type="module">
+import * as THREE from 'three';
+import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const container = document.getElementById('viewer');
+const width = container.clientWidth;
+const height = container.clientHeight;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0f0f23);
+
+const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 10000);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(width, height);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+container.innerHTML = '';
+container.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+
+// Lighting
+scene.add(new THREE.AmbientLight(0x404040, 3));
+const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+dirLight.position.set(1, 1, 1);
+scene.add(dirLight);
+const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
+dirLight2.position.set(-1, -1, -1);
+scene.add(dirLight2);
+
+// Load model
+const loader = new STLLoader();
+loader.load('../{{ model.stl }}', geometry => {
+  const material = new THREE.MeshStandardMaterial({
+    color: 0xe94560,
+    metalness: 0.3,
+    roughness: 0.6
+  });
+  const mesh = new THREE.Mesh(geometry, material);
+
+  geometry.computeBoundingBox();
+  const center = geometry.boundingBox.getCenter(new THREE.Vector3());
+  const size = geometry.boundingBox.getSize(new THREE.Vector3());
+  mesh.position.sub(center);
+
+  scene.add(mesh);
+  camera.position.set(0, 0, Math.max(size.x, size.y, size.z) * 2.5);
+  controls.update();
+});
+
+// Animation loop
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate();
+
+// Resize handler
+window.addEventListener('resize', () => {
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+});
+</script>
+</body>
+</html>
