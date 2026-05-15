@@ -6,6 +6,7 @@ directory, and generates HTML pages using Jinja2 templates.
 
 import json
 import os
+import sys
 import glob
 import shutil
 import subprocess
@@ -14,6 +15,34 @@ from email.utils import formatdate
 
 import yaml
 from jinja2 import Environment, FileSystemLoader
+
+# Ensure UTF-8 encoding for stdout/stderr
+if sys.version_info >= (3, 7):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except AttributeError:
+        pass
+else:
+    # Fallback for older Python versions
+    try:
+        import codecs
+        sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, errors='replace')
+        sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, errors='replace')
+    except:
+        pass
+
+
+def safe_print(msg):
+    """Print with UTF-8 error handling for environments with encoding issues."""
+    try:
+        print(msg)
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        # Fallback: print ASCII representation
+        try:
+            print(msg.encode('ascii', errors='replace').decode('ascii'))
+        except:
+            print("[UTF-8 encoding error in message]")
 
 
 def load_config():
@@ -27,7 +56,7 @@ def load_config():
     }
 
     if not os.path.exists(config_path):
-        print("Warning: gallery.yaml not found, using defaults")
+        safe_print("Warning: gallery.yaml not found, using defaults")
         return defaults
 
     with open(config_path) as f:
@@ -96,7 +125,7 @@ def collect_models(config):
         if name not in fcstd_dates or mtime > fcstd_dates[name]:
             fcstd_dates[name] = mtime
 
-    print(f"Found {len(fcstd_dates)} FCStd files in '{freecad_dir}'")
+    safe_print(f"Found {len(fcstd_dates)} FCStd files in '{freecad_dir}'")
 
     # Collect models from exported STL files
     models = []
@@ -108,7 +137,7 @@ def collect_models(config):
             mtime = fcstd_dates[name]
         else:
             mtime = int(os.path.getmtime(stl))
-            print(f"  Warning: No FCStd found for '{name}', using STL date")
+            safe_print(f"  Warning: No FCStd found for '{name}', using STL date")
 
         # Load metadata
         meta, has_metadata = load_metadata(metadata_dir, name)
@@ -134,10 +163,10 @@ def collect_models(config):
     # Sort newest first
     models.sort(key=lambda x: x["mtime"], reverse=True)
 
-    print(f"Collected {len(models)} models (sorted by date, newest first)")
+    safe_print(f"Collected {len(models)} models (sorted by date, newest first)")
     for m in models[:5]:
         status = "with metadata" if m["has_metadata"] else "NO metadata"
-        print(f"  {m['name']}: {m['mtime']} ({status})")
+        safe_print(f"  {m['name']}: {m['mtime']} ({status})")
 
     return models
 
@@ -168,7 +197,7 @@ def copy_assets(config, metadata_dir):
         if os.path.exists(images_dst):
             shutil.rmtree(images_dst)
         shutil.copytree(images_src, images_dst)
-        print(f"Copied images from '{images_src}' to '{images_dst}'")
+        safe_print(f"Copied images from '{images_src}' to '{images_dst}'")
 
 
 def find_templates_dir():
@@ -194,13 +223,11 @@ def find_templates_dir():
     for candidate in candidates:
         resolved = os.path.realpath(candidate)
         if os.path.isdir(resolved):
-            print(f"Using templates from: {resolved}")
+            safe_print(f"Using templates from: {resolved}")
             return resolved
 
-    raise FileNotFoundError(
-        "No templates directory found. Searched:\n"
-        + "\n".join(f"  - {c}" for c in candidates)
-    )
+    msg = "No templates directory found. Searched:\n" + "\n".join(f"  - {c}" for c in candidates)
+    raise FileNotFoundError(msg)
 
 
 def build_gallery(config, models, profile):
@@ -257,7 +284,7 @@ def build_gallery(config, models, profile):
         with open(detail_path, "w") as f:
             f.write(detail_html)
 
-    print(f"Gallery built: index.html + {len(models)} detail pages in '{output_dir}/'")
+    safe_print(f"Gallery built: index.html + {len(models)} detail pages in '{output_dir}/'")
 
 
 def format_rfc822(timestamp):
@@ -354,7 +381,7 @@ def build_feeds(config, models, profile):
     with open(atom_path, 'w') as f:
         f.write(atom_content)
     
-    print(f"Feeds built: rss.xml + atom.xml ({len(models)} models, base URL: {base_url})")
+    safe_print(f"Feeds built: rss.xml + atom.xml ({len(models)} models, base URL: {base_url})")
 
 
 def main():
@@ -363,7 +390,7 @@ def main():
     models = collect_models(config)
 
     if not models:
-        print("No models found. Make sure STL exports exist.")
+        safe_print("No models found. Make sure STL exports exist.")
         return
 
     build_gallery(config, models, profile)

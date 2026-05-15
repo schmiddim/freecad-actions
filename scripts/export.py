@@ -6,13 +6,36 @@ to search for .FCStd files (non-recursive).
 
 import FreeCAD, Mesh, Part
 import os
+import sys
 import glob
+
+# Ensure UTF-8 encoding for stdout/stderr
+if sys.version_info >= (3, 7):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+else:
+    # Fallback for older Python versions
+    import codecs
+    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, errors='replace')
+    sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, errors='replace')
 
 try:
     import yaml
 except ImportError:
     # Fallback: parse simple key: "value" lines from gallery.yaml
     yaml = None
+
+
+def safe_print(msg):
+    """Print with UTF-8 error handling for environments with encoding issues."""
+    try:
+        print(msg)
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        # Fallback: print ASCII representation
+        try:
+            print(msg.encode('ascii', errors='replace').decode('ascii'))
+        except:
+            print("[UTF-8 encoding error in message]")
 
 
 def load_config():
@@ -24,7 +47,7 @@ def load_config():
     }
 
     if not os.path.exists(config_path):
-        print("Warning: gallery.yaml not found, using defaults")
+        safe_print("Warning: gallery.yaml not found, using defaults")
         return defaults
 
     if yaml:
@@ -58,32 +81,42 @@ def main():
     fcstd_files = glob.glob(pattern)
 
     if not fcstd_files:
-        print(f"No .FCStd files found in '{freecad_dir}'")
+        safe_print(f"No .FCStd files found in '{freecad_dir}'")
         return
 
-    print(f"Found {len(fcstd_files)} .FCStd files in '{freecad_dir}'")
+    safe_print(f"Found {len(fcstd_files)} .FCStd files in '{freecad_dir}'")
+
+    success_count = 0
+    error_count = 0
 
     for fcstd in fcstd_files:
-        doc = FreeCAD.openDocument(fcstd)
-        name = os.path.splitext(os.path.basename(fcstd))[0]
+        try:
+            doc = FreeCAD.openDocument(fcstd)
+            name = os.path.splitext(os.path.basename(fcstd))[0]
 
-        exported = False
-        for obj in doc.Objects:
-            if obj.isDerivedFrom("Part::Feature") and not obj.Shape.isNull():
-                stl_path = os.path.join(exports_dir, f"{name}.stl")
-                step_path = os.path.join(exports_dir, f"{name}.step")
-                Mesh.export([obj], stl_path)
-                Part.export([obj], step_path)
-                print(f"  Exported: {name}.stl + {name}.step")
-                exported = True
-                break  # first valid object
+            exported = False
+            for obj in doc.Objects:
+                if obj.isDerivedFrom("Part::Feature") and not obj.Shape.isNull():
+                    stl_path = os.path.join(exports_dir, f"{name}.stl")
+                    step_path = os.path.join(exports_dir, f"{name}.step")
+                    Mesh.export([obj], stl_path)
+                    Part.export([obj], step_path)
+                    safe_print(f"  Exported: {name}.stl + {name}.step")
+                    exported = True
+                    success_count += 1
+                    break  # first valid object
 
-        if not exported:
-            print(f"  Warning: No valid Part::Feature found in {fcstd}")
+            if not exported:
+                safe_print(f"  Warning: No valid Part::Feature found in {name}")
 
-        FreeCAD.closeDocument(doc.Name)
+            FreeCAD.closeDocument(doc.Name)
 
-    print(f"Export complete: {len(fcstd_files)} models -> {exports_dir}/")
+        except Exception as e:
+            error_count += 1
+            safe_print(f"  Error processing file: {str(e)}")
+            continue  # Skip this file, continue with next
+
+    safe_print(f"Export complete: {success_count} models exported, {error_count} errors -> {exports_dir}/")
 
 
 main()
