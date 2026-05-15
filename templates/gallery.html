@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CAD Gallery</title>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      min-height: 100vh;
+    }
+    header {
+      background: #16213e;
+      padding: 1.5rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #0f3460;
+    }
+    header h1 { font-size: 1.5rem; font-weight: 600; }
+    header a {
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.2s;
+    }
+    header a:hover { color: #fff; }
+    {% if profile %}
+    .profile {
+      background: #16213e;
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid #0f3460;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .profile-info h2 { font-size: 1.1rem; font-weight: 500; }
+    .profile-info p { color: #94a3b8; font-size: 0.85rem; margin-top: 0.3rem; }
+    .profile-links {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .profile-links a {
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 0.8rem;
+      padding: 0.3rem 0.6rem;
+      border: 1px solid #0f3460;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+    .profile-links a:hover {
+      color: #fff;
+      border-color: #e94560;
+    }
+    {% endif %}
+    .tags-filter {
+      padding: 1rem 2rem;
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+    .tag-btn {
+      background: #0f3460;
+      color: #94a3b8;
+      border: 1px solid #0f3460;
+      padding: 0.3rem 0.8rem;
+      border-radius: 16px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+    }
+    .tag-btn:hover, .tag-btn.active {
+      background: #e94560;
+      color: #fff;
+      border-color: #e94560;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+      padding: 2rem;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+    .card {
+      background: #16213e;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: 1px solid #0f3460;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    }
+    .card.hidden { display: none; }
+    .thumbnail {
+      width: 100%;
+      height: 200px;
+      background: #0f0f23;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .thumbnail img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .thumbnail .loading {
+      color: #4a5568;
+      font-size: 0.8rem;
+    }
+    .card-info {
+      padding: 1rem;
+      border-top: 1px solid #0f3460;
+    }
+    .card-info h3 {
+      font-size: 0.9rem;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .card-info p {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-top: 0.3rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-tags {
+      display: flex;
+      gap: 0.3rem;
+      flex-wrap: wrap;
+      padding: 0 1rem 0.75rem;
+    }
+    .card-tag {
+      font-size: 0.65rem;
+      color: #94a3b8;
+      background: #0f3460;
+      padding: 0.15rem 0.5rem;
+      border-radius: 10px;
+    }
+    .no-metadata {
+      font-size: 0.7rem;
+      color: #e94560;
+      padding: 0 1rem 0.75rem;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>CAD Gallery</h1>
+  </header>
+
+  {% if profile %}
+  <div class="profile">
+    <div class="profile-info">
+      <h2>{{ profile.name }}</h2>
+      {% if profile.bio %}<p>{{ profile.bio }}</p>{% endif %}
+    </div>
+    {% if profile.links %}
+    <div class="profile-links">
+      {% for platform, url in profile.links.items() %}
+      <a href="{{ url }}" target="_blank" rel="noopener">{{ platform }}</a>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if all_tags %}
+  <div class="tags-filter">
+    <button class="tag-btn active" data-tag="all">All</button>
+    {% for tag in all_tags %}
+    <button class="tag-btn" data-tag="{{ tag }}">{{ tag }}</button>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="grid" id="grid">
+    {% for model in models %}
+    <a class="card" href="view/{{ model.name }}.html" data-tags="{{ model.tags | join(',') }}">
+      <div class="thumbnail" id="thumb-{{ loop.index0 }}">
+        <span class="loading">Loading...</span>
+      </div>
+      <div class="card-info">
+        <h3>{{ model.title }}</h3>
+        {% if model.description %}
+        <p>{{ model.description | truncate(100) }}</p>
+        {% endif %}
+      </div>
+      {% if model.tags %}
+      <div class="card-tags">
+        {% for tag in model.tags %}
+        <span class="card-tag">{{ tag }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% if not model.has_metadata %}
+      <div class="no-metadata">No metadata found — add some by creating <code>{{ model.metadata_path }}</code></div>
+      {% endif %}
+    </a>
+    {% endfor %}
+  </div>
+
+<script type="module">
+import * as THREE from 'three';
+import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+
+const models = {{ models_json | safe }};
+const loader = new STLLoader();
+
+// Shared offscreen renderer for thumbnails
+let thumbRenderer = null;
+let thumbScene = null;
+let thumbCamera = null;
+
+function initThumbRenderer() {
+  thumbRenderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+  thumbRenderer.setSize(400, 300);
+  thumbRenderer.setPixelRatio(1);
+
+  thumbScene = new THREE.Scene();
+  thumbScene.background = new THREE.Color(0x0f0f23);
+
+  thumbCamera = new THREE.PerspectiveCamera(45, 400/300, 0.1, 1000);
+
+  thumbScene.add(new THREE.AmbientLight(0x404040, 3));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+  dirLight.position.set(1, 1, 1);
+  thumbScene.add(dirLight);
+  const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
+  dirLight2.position.set(-1, -1, -1);
+  thumbScene.add(dirLight2);
+}
+
+function renderThumbnail(stlPath, callback) {
+  if (!thumbRenderer) initThumbRenderer();
+
+  loader.load(stlPath, geometry => {
+    const toRemove = thumbScene.children.filter(c => c.type === 'Mesh');
+    toRemove.forEach(m => thumbScene.remove(m));
+
+    const material = new THREE.MeshStandardMaterial({
+      color: 0xe94560,
+      metalness: 0.3,
+      roughness: 0.6
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+
+    geometry.computeBoundingBox();
+    const center = geometry.boundingBox.getCenter(new THREE.Vector3());
+    const size = geometry.boundingBox.getSize(new THREE.Vector3());
+    mesh.position.sub(center);
+    mesh.rotation.x = -0.5;
+    mesh.rotation.y = 0.5;
+
+    thumbScene.add(mesh);
+    thumbCamera.position.set(0, 0, Math.max(size.x, size.y, size.z) * 2.5);
+    thumbCamera.lookAt(0, 0, 0);
+
+    thumbRenderer.render(thumbScene, thumbCamera);
+
+    const dataUrl = thumbRenderer.domElement.toDataURL('image/png');
+    callback(dataUrl);
+
+    geometry.dispose();
+    material.dispose();
+  });
+}
+
+// Build grid thumbnails
+const grid = document.getElementById('grid');
+const cards = grid.querySelectorAll('.card');
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const card = entry.target;
+      const thumb = card.querySelector('.thumbnail');
+      const name = card.href.split('/').pop().replace('.html', '');
+      const model = models.find(m => m.name === name);
+
+      if (thumb && model && !thumb.dataset.loaded) {
+        thumb.dataset.loaded = 'true';
+        renderThumbnail(model.stl, (dataUrl) => {
+          thumb.innerHTML = `<img src="${dataUrl}" alt="${model.name}">`;
+        });
+      }
+      observer.unobserve(card);
+    }
+  });
+}, { rootMargin: '200px' });
+
+cards.forEach(card => observer.observe(card));
+
+// Tag filtering
+document.querySelectorAll('.tag-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const tag = btn.dataset.tag;
+
+    cards.forEach(card => {
+      if (tag === 'all') {
+        card.classList.remove('hidden');
+      } else {
+        const cardTags = (card.dataset.tags || '').split(',');
+        card.classList.toggle('hidden', !cardTags.includes(tag));
+      }
+    });
+  });
+});
+</script>
+</body>
+</html>

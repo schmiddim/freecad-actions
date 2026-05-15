@@ -1,0 +1,7 @@
+{
+  "yaml.schemas": {
+    "schemas/meta.schema.json": "metadata/*.yaml",
+    "schemas/profile.schema.json": "profile.yaml",
+    "schemas/gallery.schema.json": "gallery.yaml"
+  }
+}

@@ -1,0 +1,16 @@
+[project]
+name = "cad-gallery"
+version = "0.1.0"
+description = "Self-hosted CAD model gallery with FreeCAD export and Three.js viewer"
+requires-python = ">=3.10"
+
+dependencies = [
+    "jinja2>=3.1",
+    "pyyaml>=6.0",
+    "jsonschema>=4.20",
+]
+
+[project.optional-dependencies]
+dev = [
+    "jsonschema[format]>=4.20",
+]

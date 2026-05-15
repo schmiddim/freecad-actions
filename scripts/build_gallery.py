@@ -1,483 +1,274 @@
-import os, glob, shutil, json, subprocess
+"""Build the CAD Gallery HTML pages from exported STL files and metadata.
 
-# Kopiere exports in gallery für GitHub Pages
-os.makedirs("gallery/models", exist_ok=True)
-for stl in glob.glob("exports/*.stl"):
-    shutil.copy(stl, "gallery/models/")
+Reads configuration from gallery.yaml, loads metadata from the metadata
+directory, and generates HTML pages using Jinja2 templates.
+"""
+
+import json
+import os
+import glob
+import shutil
+import subprocess
+
+import yaml
+from jinja2 import Environment, FileSystemLoader
+
+
+def load_config():
+    """Load gallery.yaml configuration."""
+    config_path = "gallery.yaml"
+    defaults = {
+        "freecad_dir": ".",
+        "metadata_dir": "metadata",
+        "output_dir": "gallery",
+        "exports_dir": "exports",
+    }
+
+    if not os.path.exists(config_path):
+        print("Warning: gallery.yaml not found, using defaults")
+        return defaults
+
+    with open(config_path) as f:
+        cfg = yaml.safe_load(f) or {}
+
+    return {**defaults, **cfg}
+
+
+def load_profile():
+    """Load profile.yaml if it exists."""
+    profile_path = "profile.yaml"
+    if not os.path.exists(profile_path):
+        return None
+
+    with open(profile_path) as f:
+        return yaml.safe_load(f)
+
+
+def load_metadata(metadata_dir, model_name):
+    """Load metadata for a model. Returns (metadata_dict, has_metadata)."""
+    for ext in (".yaml", ".yml"):
+        meta_path = os.path.join(metadata_dir, f"{model_name}{ext}")
+        if os.path.exists(meta_path):
+            with open(meta_path) as f:
+                data = yaml.safe_load(f)
+            if data:
+                return data, True
+
+    return {}, False
+
 
 def get_git_commit_date(filepath):
-    """Holt das letzte Git-Commit-Datum einer Datei als Unix-Timestamp."""
+    """Get the last git commit date for a file as a Unix timestamp."""
     try:
         result = subprocess.run(
             ["git", "log", "-1", "--format=%ct", "--", filepath],
-            capture_output=True, text=True, check=True
+            capture_output=True,
+            text=True,
+            check=True,
         )
         timestamp = result.stdout.strip()
         if timestamp:
             return int(timestamp)
-    except:
+    except (subprocess.CalledProcessError, FileNotFoundError):
         pass
     return None
 
-# Baue Index aller FCStd-Dateien mit ihren Git-Commit-Daten
-fcstd_dates = {}
-for fcstd in glob.glob("**/*.FCStd", recursive=True):
-    name = os.path.splitext(os.path.basename(fcstd))[0]
-    
-    # Git-Commit-Datum verwenden
-    git_date = get_git_commit_date(fcstd)
-    if git_date:
-        mtime = git_date
-    else:
-        # Fallback: Filesystem-mtime
-        mtime = int(os.path.getmtime(fcstd))
-    
-    # Falls mehrere FCStd mit gleichem Namen, nimm die neueste
-    if name not in fcstd_dates or mtime > fcstd_dates[name]:
-        fcstd_dates[name] = mtime
 
-print(f"Found {len(fcstd_dates)} FCStd files with dates")
+def collect_models(config):
+    """Collect all models with their metadata and dates."""
+    freecad_dir = config["freecad_dir"]
+    metadata_dir = config["metadata_dir"]
+    exports_dir = config["exports_dir"]
 
-# Sammle Modelle - Sortierung nach FCStd-Datum
-models = []
-for stl in glob.glob("exports/*.stl"):
-    name = os.path.splitext(os.path.basename(stl))[0]
-    
-    # Nutze FCStd-Datum wenn vorhanden
-    if name in fcstd_dates:
-        mtime = fcstd_dates[name]
-    else:
-        mtime = int(os.path.getmtime(stl))
-        print(f"Warning: No FCStd found for {name}, using STL date")
-    
-    models.append({"name": name, "stl": f"models/{name}.stl", "mtime": mtime})
+    # Build index of FCStd files with their git commit dates
+    fcstd_dates = {}
+    pattern = os.path.join(freecad_dir, "*.FCStd")
+    for fcstd in glob.glob(pattern):
+        name = os.path.splitext(os.path.basename(fcstd))[0]
+        git_date = get_git_commit_date(fcstd)
+        if git_date:
+            mtime = git_date
+        else:
+            mtime = int(os.path.getmtime(fcstd))
 
-models.sort(key=lambda x: x["mtime"], reverse=True)
+        if name not in fcstd_dates or mtime > fcstd_dates[name]:
+            fcstd_dates[name] = mtime
 
-# Debug: Zeige erste 5 Modelle
-print("Top 5 models (newest first):")
-for m in models[:5]:
-    print(f"  {m['name']}: {m['mtime']}")
+    print(f"Found {len(fcstd_dates)} FCStd files in '{freecad_dir}'")
 
-# Gemeinsame Styles
-common_styles = """
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #1a1a2e; 
-      color: #eee;
-      min-height: 100vh;
-    }
-    header {
-      background: #16213e;
-      padding: 1.5rem 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #0f3460;
-    }
-    header h1 { font-size: 1.5rem; font-weight: 600; }
-    header a { 
-      color: #94a3b8; 
-      text-decoration: none; 
-      font-size: 0.9rem;
-      transition: color 0.2s;
-    }
-    header a:hover { color: #fff; }
-    .btn {
-      background: #0f3460;
-      color: #fff;
-      border: none;
-      padding: 0.75rem 1.5rem;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 0.9rem;
-      text-decoration: none;
-      transition: background 0.2s;
-      display: inline-block;
-    }
-    .btn:hover { background: #1a4a7a; }
-    .btn-primary { background: #e94560; }
-    .btn-primary:hover { background: #ff6b6b; }
-"""
+    # Collect models from exported STL files
+    models = []
+    for stl in glob.glob(os.path.join(exports_dir, "*.stl")):
+        name = os.path.splitext(os.path.basename(stl))[0]
 
-# Index-Seite (Grid mit Thumbnails)
-models_json = json.dumps([{"name": m["name"], "stl": m["stl"]} for m in models])
+        # Get date
+        if name in fcstd_dates:
+            mtime = fcstd_dates[name]
+        else:
+            mtime = int(os.path.getmtime(stl))
+            print(f"  Warning: No FCStd found for '{name}', using STL date")
 
-index_html = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CAD Gallery</title>
-  <script type="importmap">
-    {{
-      "imports": {{
-        "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
-      }}
-    }}
-  </script>
-  <style>
-{common_styles}
-    .grid {{
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1.5rem;
-      padding: 2rem;
-      max-width: 1600px;
-      margin: 0 auto;
-    }}
-    .card {{
-      background: #16213e;
-      border-radius: 12px;
-      overflow: hidden;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-      border: 1px solid #0f3460;
-      text-decoration: none;
-      color: inherit;
-      display: block;
-    }}
-    .card:hover {{
-      transform: translateY(-4px);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
-    }}
-    .thumbnail {{
-      width: 100%;
-      height: 200px;
-      background: #0f0f23;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-    }}
-    .thumbnail img {{
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }}
-    .thumbnail .loading {{
-      color: #4a5568;
-      font-size: 0.8rem;
-    }}
-    .card-info {{
-      padding: 1rem;
-      border-top: 1px solid #0f3460;
-    }}
-    .card-info h3 {{
-      font-size: 0.9rem;
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }}
-  </style>
-</head>
-<body>
-  <header>
-    <h1>CAD Gallery</h1>
-    <a href="https://github.com/schmiddim/freecad" target="_blank">View on GitHub</a>
-  </header>
-  
-  <div class="grid" id="grid"></div>
+        # Load metadata
+        meta, has_metadata = load_metadata(metadata_dir, name)
 
-<script type="module">
-import * as THREE from 'three';
-import {{ STLLoader }} from 'three/addons/loaders/STLLoader.js';
+        # Build metadata file path hint for the fallback message
+        metadata_path = os.path.join(metadata_dir, f"{name}.yaml")
 
-const models = {models_json};
-const loader = new STLLoader();
-const grid = document.getElementById('grid');
+        model = {
+            "name": name,
+            "stl": f"models/{name}.stl",
+            "mtime": mtime,
+            "title": meta.get("title", name),
+            "description": meta.get("description", ""),
+            "tags": meta.get("tags", []),
+            "images": meta.get("images", []),
+            "links": meta.get("links", {}),
+            "license": meta.get("license", ""),
+            "has_metadata": has_metadata,
+            "metadata_path": metadata_path,
+        }
+        models.append(model)
 
-// Shared offscreen renderer for thumbnails
-let thumbRenderer = null;
-let thumbScene = null;
-let thumbCamera = null;
+    # Sort newest first
+    models.sort(key=lambda x: x["mtime"], reverse=True)
 
-function initThumbRenderer() {{
-  thumbRenderer = new THREE.WebGLRenderer({{ antialias: true, preserveDrawingBuffer: true }});
-  thumbRenderer.setSize(400, 300);
-  thumbRenderer.setPixelRatio(1);
-  
-  thumbScene = new THREE.Scene();
-  thumbScene.background = new THREE.Color(0x0f0f23);
-  
-  thumbCamera = new THREE.PerspectiveCamera(45, 400/300, 0.1, 1000);
-  
-  thumbScene.add(new THREE.AmbientLight(0x404040, 3));
-  const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-  dirLight.position.set(1, 1, 1);
-  thumbScene.add(dirLight);
-  const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
-  dirLight2.position.set(-1, -1, -1);
-  thumbScene.add(dirLight2);
-}}
+    print(f"Collected {len(models)} models (sorted by date, newest first)")
+    for m in models[:5]:
+        status = "with metadata" if m["has_metadata"] else "NO metadata"
+        print(f"  {m['name']}: {m['mtime']} ({status})")
 
-function renderThumbnail(stlPath, callback) {{
-  if (!thumbRenderer) initThumbRenderer();
-  
-  loader.load(stlPath, geometry => {{
-    // Clear previous mesh
-    const toRemove = thumbScene.children.filter(c => c.type === 'Mesh');
-    toRemove.forEach(m => thumbScene.remove(m));
-    
-    const material = new THREE.MeshStandardMaterial({{ 
-      color: 0xe94560, 
-      metalness: 0.3, 
-      roughness: 0.6 
-    }});
-    const mesh = new THREE.Mesh(geometry, material);
-    
-    geometry.computeBoundingBox();
-    const center = geometry.boundingBox.getCenter(new THREE.Vector3());
-    const size = geometry.boundingBox.getSize(new THREE.Vector3());
-    mesh.position.sub(center);
-    mesh.rotation.x = -0.5;
-    mesh.rotation.y = 0.5;
-    
-    thumbScene.add(mesh);
-    thumbCamera.position.set(0, 0, Math.max(size.x, size.y, size.z) * 2.5);
-    thumbCamera.lookAt(0, 0, 0);
-    
-    thumbRenderer.render(thumbScene, thumbCamera);
-    
-    const dataUrl = thumbRenderer.domElement.toDataURL('image/png');
-    callback(dataUrl);
-    
-    // Cleanup
-    geometry.dispose();
-    material.dispose();
-  }});
-}}
+    return models
 
-// Build grid
-models.forEach((model, i) => {{
-  const card = document.createElement('a');
-  card.className = 'card';
-  card.href = `view/${{model.name}}.html`;
-  card.innerHTML = `
-    <div class="thumbnail" id="thumb-${{i}}">
-      <span class="loading">Loading...</span>
-    </div>
-    <div class="card-info">
-      <h3>${{model.name}}</h3>
-    </div>
-  `;
-  grid.appendChild(card);
-}});
 
-// Lazy load thumbnails
-const observer = new IntersectionObserver((entries) => {{
-  entries.forEach(entry => {{
-    if (entry.isIntersecting) {{
-      const card = entry.target;
-      const thumb = card.querySelector('.thumbnail');
-      const name = card.href.split('/').pop().replace('.html', '');
-      const model = models.find(m => m.name === name);
-      
-      if (thumb && model && !thumb.dataset.loaded) {{
-        thumb.dataset.loaded = 'true';
-        renderThumbnail(model.stl, (dataUrl) => {{
-          thumb.innerHTML = `<img src="${{dataUrl}}" alt="${{model.name}}">`;
-        }});
-      }}
-      observer.unobserve(card);
-    }}
-  }});
-}}, {{ rootMargin: '200px' }});
+def collect_all_tags(models):
+    """Collect all unique tags across all models, sorted alphabetically."""
+    tags = set()
+    for model in models:
+        tags.update(model.get("tags", []))
+    return sorted(tags)
 
-document.querySelectorAll('.card').forEach(card => observer.observe(card));
-</script>
-</body>
-</html>"""
 
-with open("gallery/index.html", "w") as f:
-    f.write(index_html)
+def copy_assets(config, metadata_dir):
+    """Copy STL files and metadata images to the output directory."""
+    output_dir = config["output_dir"]
+    exports_dir = config["exports_dir"]
 
-# Detail-Seiten für jedes Modell
-os.makedirs("gallery/view", exist_ok=True)
+    # Copy STL files
+    models_dir = os.path.join(output_dir, "models")
+    os.makedirs(models_dir, exist_ok=True)
+    for stl in glob.glob(os.path.join(exports_dir, "*.stl")):
+        shutil.copy(stl, models_dir)
 
-for i, model in enumerate(models):
-    # Vorheriges/Nächstes Modell für Navigation
-    prev_model = models[i - 1] if i > 0 else None
-    next_model = models[i + 1] if i < len(models) - 1 else None
-    
-    nav_html = '<div class="nav">'
-    if prev_model:
-        nav_html += f'<a href="{prev_model["name"]}.html" class="btn">Previous</a>'
-    else:
-        nav_html += '<span></span>'
-    nav_html += f'<a href="../index.html" class="btn">Back to Gallery</a>'
-    if next_model:
-        nav_html += f'<a href="{next_model["name"]}.html" class="btn">Next</a>'
-    else:
-        nav_html += '<span></span>'
-    nav_html += '</div>'
-    
-    detail_html = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{model["name"]} - CAD Gallery</title>
-  <script type="importmap">
-    {{
-      "imports": {{
-        "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
-      }}
-    }}
-  </script>
-  <style>
-{common_styles}
-    .container {{
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 2rem;
-    }}
-    .viewer-wrapper {{
-      background: #0f0f23;
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1px solid #0f3460;
-    }}
-    .viewer {{
-      width: 100%;
-      height: 70vh;
-      min-height: 400px;
-    }}
-    .viewer canvas {{
-      width: 100%;
-      height: 100%;
-    }}
-    .info {{
-      padding: 1.5rem;
-      border-top: 1px solid #0f3460;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }}
-    .info h2 {{
-      font-size: 1.3rem;
-      font-weight: 600;
-    }}
-    .nav {{
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 1.5rem;
-      gap: 1rem;
-    }}
-    .nav .btn {{
-      min-width: 120px;
-      text-align: center;
-    }}
-    .loading {{
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 70vh;
-      color: #4a5568;
-    }}
-  </style>
-</head>
-<body>
-  <header>
-    <h1>CAD Gallery</h1>
-    <a href="https://github.com/schmiddim/freecad" target="_blank">View on GitHub</a>
-  </header>
-  
-  <div class="container">
-    <div class="viewer-wrapper">
-      <div class="viewer" id="viewer">
-        <div class="loading">Loading 3D model...</div>
-      </div>
-      <div class="info">
-        <h2>{model["name"]}</h2>
-        <a href="../{model["stl"]}" download class="btn btn-primary">Download STL</a>
-      </div>
-    </div>
-    {nav_html}
-  </div>
+    # Copy metadata images
+    images_src = os.path.join(metadata_dir, "images")
+    if os.path.isdir(images_src):
+        images_dst = os.path.join(output_dir, "images")
+        if os.path.exists(images_dst):
+            shutil.rmtree(images_dst)
+        shutil.copytree(images_src, images_dst)
+        print(f"Copied images from '{images_src}' to '{images_dst}'")
 
-<script type="module">
-import * as THREE from 'three';
-import {{ STLLoader }} from 'three/addons/loaders/STLLoader.js';
-import {{ OrbitControls }} from 'three/addons/controls/OrbitControls.js';
 
-const container = document.getElementById('viewer');
-const width = container.clientWidth;
-const height = container.clientHeight;
+def find_templates_dir():
+    """Find the templates directory.
 
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0f0f23);
+    Lookup order:
+      1. ./templates  (user's repo has custom templates)
+      2. $ACTION_PATH/templates  (bundled default templates from the action)
+      3. Directory of this script/../templates  (local dev / Makefile usage)
 
-const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 10000);
-const renderer = new THREE.WebGLRenderer({{ antialias: true }});
-renderer.setSize(width, height);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    Returns the first existing path, or raises FileNotFoundError.
+    """
+    candidates = ["templates"]
 
-container.innerHTML = '';
-container.appendChild(renderer.domElement);
+    action_path = os.environ.get("ACTION_PATH")
+    if action_path:
+        candidates.append(os.path.join(action_path, "templates"))
 
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.dampingFactor = 0.05;
+    # Fallback: relative to this script (for local dev / Makefile)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    candidates.append(os.path.join(script_dir, "..", "templates"))
 
-// Lighting
-scene.add(new THREE.AmbientLight(0x404040, 3));
-const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-dirLight.position.set(1, 1, 1);
-scene.add(dirLight);
-const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
-dirLight2.position.set(-1, -1, -1);
-scene.add(dirLight2);
+    for candidate in candidates:
+        resolved = os.path.realpath(candidate)
+        if os.path.isdir(resolved):
+            print(f"Using templates from: {resolved}")
+            return resolved
 
-// Load model
-const loader = new STLLoader();
-loader.load('../{model["stl"]}', geometry => {{
-  const material = new THREE.MeshStandardMaterial({{ 
-    color: 0xe94560, 
-    metalness: 0.3, 
-    roughness: 0.6 
-  }});
-  const mesh = new THREE.Mesh(geometry, material);
-  
-  geometry.computeBoundingBox();
-  const center = geometry.boundingBox.getCenter(new THREE.Vector3());
-  const size = geometry.boundingBox.getSize(new THREE.Vector3());
-  mesh.position.sub(center);
-  
-  scene.add(mesh);
-  camera.position.set(0, 0, Math.max(size.x, size.y, size.z) * 2.5);
-  controls.update();
-}});
+    raise FileNotFoundError(
+        "No templates directory found. Searched:\n"
+        + "\n".join(f"  - {c}" for c in candidates)
+    )
 
-// Animation loop
-function animate() {{
-  requestAnimationFrame(animate);
-  controls.update();
-  renderer.render(scene, camera);
-}}
-animate();
 
-// Resize handler
-window.addEventListener('resize', () => {{
-  const w = container.clientWidth;
-  const h = container.clientHeight;
-  camera.aspect = w / h;
-  camera.updateProjectionMatrix();
-  renderer.setSize(w, h);
-}});
-</script>
-</body>
-</html>"""
-    
-    with open(f"gallery/view/{model['name']}.html", "w") as f:
-        f.write(detail_html)
+def build_gallery(config, models, profile):
+    """Build the gallery HTML pages using Jinja2 templates."""
+    output_dir = config["output_dir"]
+    metadata_dir = config["metadata_dir"]
 
-print(f"Gallery built with {len(models)} models (sorted by date, newest first).")
-print(f"Created index.html + {len(models)} detail pages in view/")
+    # Setup Jinja2 — find templates in repo or fall back to action defaults
+    templates_dir = find_templates_dir()
+    env = Environment(
+        loader=FileSystemLoader(templates_dir),
+        autoescape=False,
+    )
+
+    # Prepare output directories
+    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(os.path.join(output_dir, "view"), exist_ok=True)
+
+    # Copy assets
+    copy_assets(config, metadata_dir)
+
+    # Collect all tags for filter buttons
+    all_tags = collect_all_tags(models)
+
+    # Build models_json for the JavaScript thumbnail renderer
+    models_json = json.dumps(
+        [{"name": m["name"], "stl": m["stl"]} for m in models]
+    )
+
+    # Render index page
+    gallery_template = env.get_template("gallery.html")
+    index_html = gallery_template.render(
+        models=models,
+        models_json=models_json,
+        profile=profile,
+        all_tags=all_tags,
+    )
+    index_path = os.path.join(output_dir, "index.html")
+    with open(index_path, "w") as f:
+        f.write(index_html)
+
+    # Render detail pages
+    detail_template = env.get_template("detail.html")
+    for i, model in enumerate(models):
+        prev_model = models[i - 1] if i > 0 else None
+        next_model = models[i + 1] if i < len(models) - 1 else None
+
+        detail_html = detail_template.render(
+            model=model,
+            prev_model=prev_model,
+            next_model=next_model,
+        )
+        detail_path = os.path.join(output_dir, "view", f"{model['name']}.html")
+        with open(detail_path, "w") as f:
+            f.write(detail_html)
+
+    print(f"Gallery built: index.html + {len(models)} detail pages in '{output_dir}/'")
+
+
+def main():
+    config = load_config()
+    profile = load_profile()
+    models = collect_models(config)
+
+    if not models:
+        print("No models found. Make sure STL exports exist.")
+        return
+
+    build_gallery(config, models, profile)
+
+
+if __name__ == "__main__":
+    main()
