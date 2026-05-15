@@ -9,6 +9,8 @@ import os
 import glob
 import shutil
 import subprocess
+from datetime import datetime
+from email.utils import formatdate
 
 import yaml
 from jinja2 import Environment, FileSystemLoader
@@ -258,6 +260,103 @@ def build_gallery(config, models, profile):
     print(f"Gallery built: index.html + {len(models)} detail pages in '{output_dir}/'")
 
 
+def format_rfc822(timestamp):
+    """Convert Unix timestamp to RFC 822 date format (for RSS)."""
+    return formatdate(timestamp, usegmt=True)
+
+
+def format_iso8601(timestamp):
+    """Convert Unix timestamp to ISO 8601 format (for Atom)."""
+    return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+
+def get_base_url():
+    """Derive base URL from git remote or environment variable.
+    
+    Priority:
+      1. GALLERY_BASE_URL env var (user-provided)
+      2. Extract from git remote (github.com/user/repo -> https://user.github.io/repo)
+      3. Fallback to localhost
+    """
+    base_url = os.environ.get('GALLERY_BASE_URL')
+    if base_url:
+        return base_url.rstrip('/')
+    
+    try:
+        result = subprocess.run(
+            ['git', 'config', '--get', 'remote.master.url'],
+            capture_output=True, text=True, check=True
+        )
+        remote = result.stdout.strip()
+        
+        # Parse: git@github.com:user/repo.git or https://github.com/user/repo
+        if 'github.com' in remote:
+            # Extract user and repo from various git URL formats
+            parts = remote.replace(':', '/').replace('.git', '').split('/')
+            user = parts[-2]
+            repo = parts[-1]
+            return f'https://{user}.github.io/{repo}'
+    except:
+        # Try origin as fallback
+        try:
+            result = subprocess.run(
+                ['git', 'config', '--get', 'remote.origin.url'],
+                capture_output=True, text=True, check=True
+            )
+            remote = result.stdout.strip()
+            if 'github.com' in remote:
+                parts = remote.replace(':', '/').replace('.git', '').split('/')
+                user = parts[-2]
+                repo = parts[-1]
+                return f'https://{user}.github.io/{repo}'
+        except:
+            pass
+    
+    return 'http://localhost:8000'  # Fallback
+
+
+def build_feeds(config, models, profile):
+    """Build RSS and Atom feeds."""
+    output_dir = config["output_dir"]
+    templates_dir = find_templates_dir()
+    
+    env = Environment(
+        loader=FileSystemLoader(templates_dir),
+        autoescape=False,
+    )
+    
+    # Custom filters for date formatting
+    env.filters['format_rfc822'] = format_rfc822
+    env.filters['format_iso8601'] = format_iso8601
+    
+    base_url = get_base_url()
+    
+    # Render RSS feed
+    rss_template = env.get_template('rss.xml')
+    rss_content = rss_template.render(
+        models=models,
+        profile=profile,
+        base_url=base_url,
+    )
+    rss_path = os.path.join(output_dir, 'rss.xml')
+    with open(rss_path, 'w') as f:
+        f.write(rss_content)
+    
+    # Render Atom feed
+    atom_template = env.get_template('atom.xml')
+    atom_content = atom_template.render(
+        models=models,
+        profile=profile,
+        base_url=base_url,
+        now=int(datetime.now().timestamp()),
+    )
+    atom_path = os.path.join(output_dir, 'atom.xml')
+    with open(atom_path, 'w') as f:
+        f.write(atom_content)
+    
+    print(f"Feeds built: rss.xml + atom.xml ({len(models)} models, base URL: {base_url})")
+
+
 def main():
     config = load_config()
     profile = load_profile()
@@ -268,6 +367,7 @@ def main():
         return
 
     build_gallery(config, models, profile)
+    build_feeds(config, models, profile)
 
 
 if __name__ == "__main__":
