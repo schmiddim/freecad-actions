@@ -15,10 +15,10 @@ release tag. Update them whenever schemas change and a new release is cut.
 
 ```yaml
 # cad-gallery.yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/schmiddim/freecad-actions/refs/tags/v1.5.0/schemas/cad-gallery.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/schmiddim/freecad-action/refs/tags/v1.5.0/schemas/cad-gallery.schema.json
 
 # maker.yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/schmiddim/freecad-actions/refs/tags/v1.5.0/schemas/maker.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/schmiddim/freecad-action/refs/tags/v1.5.0/schemas/maker.schema.json
 ```
 
 3. Repeat this step whenever schemas change and a new release is cut.

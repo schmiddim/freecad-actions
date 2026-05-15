@@ -22,7 +22,7 @@ zu STL/STEP exportiert und als interaktive Three.js Gallery auf GitHub Pages dep
 ## Umgesetzte Features (Phase 2: Reusable Action)
 
 - [x] **`action.yml` als reusable Composite Action** (Export + Gallery Build)
-- [x] **Docker Image auf GHCR** (`ghcr.io/schmiddim/freecad-actions`)
+- [x] **Docker Image auf GHCR** (`ghcr.io/schmiddim/freecad-action`)
 - [x] **Multi-Stage Dockerfile** (kleineres Runtime-Image)
 - [x] **Semantic Versioning** mit automatischen Moving Tags (`v1`, `v1.2`, `v1.2.3`)
 - [x] **Workflow `cad-gallery.yaml` vereinfacht** (nutzt eigene Action, ~30 Zeilen statt ~100)

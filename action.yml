@@ -30,7 +30,7 @@ runs:
       id: build-gallery
       shell: bash
       env:
-        DOCKER_IMAGE: ghcr.io/schmiddim/freecad-actions:latest
+        DOCKER_IMAGE: ghcr.io/schmiddim/freecad-action:latest
         WORKSPACE: ${{ github.workspace }}
         ACTION_PATH: ${{ github.action_path }}
         SEND_PING: ${{ inputs.send-ping }}

@@ -3,13 +3,13 @@
 # Usage: scripts/build.sh [export|gallery|build]
 #
 # Environment variables:
-#   DOCKER_IMAGE  - Docker image for FreeCAD export (default: ghcr.io/schmiddim/freecad-actions:latest)
+#   DOCKER_IMAGE  - Docker image for FreeCAD export (default: ghcr.io/schmiddim/freecad-action:latest)
 #   WORKSPACE     - Working directory mounted into Docker (default: current directory)
 #   ACTION_PATH   - Path to the action repo (set automatically in GitHub Actions)
 
 set -euo pipefail
 
-DOCKER_IMAGE="${DOCKER_IMAGE:-ghcr.io/schmiddim/freecad-actions:latest}"
+DOCKER_IMAGE="${DOCKER_IMAGE:-ghcr.io/schmiddim/freecad-action:latest}"
 WORKSPACE="${WORKSPACE:-$(pwd)}"
 PYTHON="${PYTHON:-$(command -v python3 2>/dev/null || command -v python 2>/dev/null)}"
 

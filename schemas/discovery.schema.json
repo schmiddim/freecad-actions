@@ -12,7 +12,7 @@
     },
     "generator": {
       "type": "string",
-      "const": "freecad-actions",
+      "const": "freecad-action",
       "description": "Name of the tool that generated this document"
     },
     "generator_version": {
@@ -22,7 +22,7 @@
     "git_source_url": {
       "type": ["string", "null"],
       "description": "HTTPS URL of the source code repository",
-      "example": "https://github.com/schmiddim/freecad-actions"
+      "example": "https://github.com/schmiddim/freecad-action"
     },
     "profile": {
       "type": ["object", "null"],

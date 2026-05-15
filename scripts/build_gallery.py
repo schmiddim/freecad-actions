@@ -427,7 +427,7 @@ def build_discovery(config, models, profile, base_url):
 
     discovery = {
         "version": "1",
-        "generator": "freecad-actions",
+        "generator": "freecad-action",
         "generator_version": generator_version,
         "git_source_url": git_source_url,
         "profile": profile if profile else None,
@@ -478,7 +478,7 @@ def ping_aggregator(base_url):
     req = urllib.request.Request(
         AGGREGATOR_URL,
         data=payload,
-        headers={'Content-Type': 'application/json', 'User-Agent': 'freecad-actions'},
+        headers={'Content-Type': 'application/json', 'User-Agent': 'freecad-action'},
         method='POST',
     )
     try:
