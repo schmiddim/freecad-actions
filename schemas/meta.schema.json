@@ -21,6 +21,14 @@
       "uniqueItems": true,
       "description": "Tags for filtering in the gallery view"
     },
+    "categories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true,
+      "description": "Categories for grouping models (e.g. 'tools', 'toys', 'parts'). Categories provide higher-level organization than tags."
+    },
     "images": {
       "type": "array",
       "items": {

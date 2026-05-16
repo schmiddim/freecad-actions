@@ -94,6 +94,11 @@
             "type": "array",
             "items": { "type": "string" }
           },
+          "categories": {
+            "type": "array",
+            "description": "Categories for high-level grouping",
+            "items": { "type": "string" }
+          },
           "license": {
             "type": ["string", "null"]
           },

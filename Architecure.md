@@ -53,7 +53,7 @@ zu STL/STEP exportiert und als interaktive Three.js Gallery auf GitHub Pages dep
     - Kein Flash beim Laden (Theme-Initialisierung im `<head>` vor dem Render)
 
 ## Offene Features (Phase 3+)
-
+- [ ] Github Link soll auf das Repo gehen
 - [ ] Tests (z.B. Python unit tests fuer `build_gallery.py`, `validate.py`)
 - [ ] Publish mit Release-Trigger
 - [ ] Server-Teil (Aggregator-Backend)

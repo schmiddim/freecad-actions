@@ -71,8 +71,33 @@
       line-height: 1;
     }
     .theme-toggle:hover { color: var(--text); border-color: var(--muted); }
+    .categories-filter {
+      padding: 1.5rem 2rem 0.5rem;
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+    .category-btn {
+      background: var(--surface);
+      color: var(--text);
+      border: 2px solid var(--border);
+      padding: 0.5rem 1.2rem;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .category-btn:hover, .category-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
     .tags-filter {
-      padding: 1rem 2rem;
+      padding: 0.5rem 2rem 1rem;
       display: flex;
       gap: 0.5rem;
       flex-wrap: wrap;
@@ -210,9 +235,18 @@
     </nav>
   </header>
 
+  {% if all_categories %}
+  <div class="categories-filter">
+    <button class="category-btn active" data-category="all">All Categories</button>
+    {% for category in all_categories %}
+    <button class="category-btn" data-category="{{ category }}">{{ category }}</button>
+    {% endfor %}
+  </div>
+  {% endif %}
+
   {% if all_tags %}
   <div class="tags-filter">
-    <button class="tag-btn active" data-tag="all">All</button>
+    <button class="tag-btn active" data-tag="all">All Tags</button>
     {% for tag in all_tags %}
     <button class="tag-btn" data-tag="{{ tag }}">{{ tag }}</button>
     {% endfor %}
@@ -221,7 +255,7 @@
 
   <div class="grid" id="grid">
     {% for model in models %}
-    <a class="card" href="view/{{ model.name }}.html" data-tags="{{ model.tags | join(',') }}">
+    <a class="card" href="view/{{ model.name }}.html" data-tags="{{ model.tags | join(',') }}" data-categories="{{ model.categories | join(',') }}">
       <div class="thumbnail">
         {% if model.primaryImage %}
         <img src="{{ model.primaryImage }}" alt="{{ model.title }}" loading="lazy">
@@ -264,21 +298,40 @@ toggle.addEventListener('click', () => {
 </script>
 
 <script>
-// Tag filtering
+// Filtering logic
 const cards = document.querySelectorAll('.card');
+let activeCategory = 'all';
+let activeTag = 'all';
+
+function applyFilters() {
+  cards.forEach(card => {
+    const cardCategories = (card.dataset.categories || '').split(',').filter(c => c);
+    const cardTags = (card.dataset.tags || '').split(',').filter(t => t);
+    
+    const categoryMatch = activeCategory === 'all' || cardCategories.includes(activeCategory);
+    const tagMatch = activeTag === 'all' || cardTags.includes(activeTag);
+    
+    card.classList.toggle('hidden', !(categoryMatch && tagMatch));
+  });
+}
+
+// Category filtering
+document.querySelectorAll('.category-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeCategory = btn.dataset.category;
+    applyFilters();
+  });
+});
+
+// Tag filtering
 document.querySelectorAll('.tag-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    const tag = btn.dataset.tag;
-    cards.forEach(card => {
-      if (tag === 'all') {
-        card.classList.remove('hidden');
-      } else {
-        const cardTags = (card.dataset.tags || '').split(',');
-        card.classList.toggle('hidden', !cardTags.includes(tag));
-      }
-    });
+    activeTag = btn.dataset.tag;
+    applyFilters();
   });
 });
 </script>

@@ -181,6 +181,7 @@ def collect_models(config):
             "title": meta.get("title", name),
             "description": meta.get("description", ""),
             "tags": meta.get("tags", []),
+            "categories": meta.get("categories", []),
             "images": meta.get("images", []),
             "thumbnail": f"thumbnails/{name}.png" if has_thumbnail else None,
             "primaryImage": primary_image,
@@ -208,6 +209,14 @@ def collect_all_tags(models):
     for model in models:
         tags.update(model.get("tags", []))
     return sorted(tags)
+
+
+def collect_all_categories(models):
+    """Collect all unique categories across all models, sorted alphabetically."""
+    categories = set()
+    for model in models:
+        categories.update(model.get("categories", []))
+    return sorted(categories)
 
 
 def copy_assets(config, metadata_dir):
@@ -296,8 +305,9 @@ def build_gallery(config, models, profile):
     # Copy assets
     copy_assets(config, metadata_dir)
 
-    # Collect all tags for filter buttons
+    # Collect all tags and categories for filter buttons
     all_tags = collect_all_tags(models)
+    all_categories = collect_all_categories(models)
 
     # Build models_json for the JavaScript thumbnail renderer
     models_json = json.dumps(
@@ -311,6 +321,7 @@ def build_gallery(config, models, profile):
         models_json=models_json,
         profile=profile,
         all_tags=all_tags,
+        all_categories=all_categories,
         title=config["title"],
     )
     index_path = os.path.join(output_dir, "index.html")
@@ -475,6 +486,7 @@ def build_discovery(config, models, profile, base_url):
                 "stl_url": f"{base_url}/{m['stl']}",
                 "fcstd_url": f"{base_url}/{m['fcstd']}" if m.get("fcstd") else None,
                 "tags": m.get("tags") or [],
+                "categories": m.get("categories") or [],
                 "license": m.get("license") or None,
                 "updated_at": datetime.utcfromtimestamp(m["mtime"]).strftime('%Y-%m-%dT%H:%M:%SZ'),
                 "thumbnail_url": f"{base_url}/{m['thumbnail']}" if m.get("thumbnail") else None,
