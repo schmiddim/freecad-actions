@@ -17,6 +17,17 @@ except ImportError:
     HAS_GUI = False
     safe_print = print  # Fallback for safe_print before it's defined
 
+# Try to import trimesh for STL-based thumbnail generation
+try:
+    import trimesh
+    import matplotlib
+    matplotlib.use('Agg')  # Non-GUI backend
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d import Axes3D
+    HAS_TRIMESH = True
+except ImportError:
+    HAS_TRIMESH = False
+
 # Ensure UTF-8 encoding for stdout/stderr
 if sys.version_info >= (3, 7):
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
@@ -81,37 +92,58 @@ def load_config():
     return config
 
 
-def generate_thumbnail(doc, obj, name, thumbnails_dir):
-    """Generate a thumbnail image (800x600) for the given object."""
-    if not HAS_GUI:
+def generate_thumbnail_from_stl(stl_path, thumbnails_dir, name):
+    """Generate thumbnail from STL file using trimesh."""
+    if not HAS_TRIMESH:
         return False
     
     try:
-        # Initialize GUI if needed
-        if not FreeCADGui.ActiveDocument:
-            FreeCADGui.showMainWindow()
-            FreeCADGui.activateWorkbench("PartWorkbench")
+        # Load STL mesh
+        mesh = trimesh.load(stl_path)
         
-        # Set up view
-        view = FreeCADGui.ActiveDocument.ActiveView
-        view.viewAxonometric()
-        view.fitAll()
+        # Create figure with white background (800x600 pixels at 100 DPI)
+        fig = plt.figure(figsize=(8, 6), dpi=100, facecolor='white')
+        ax = fig.add_subplot(111, projection='3d', facecolor='white')
         
-        # Set white background
-        view.setBackgroundColor(1.0, 1.0, 1.0, 1.0)
+        # Plot the mesh
+        vertices = mesh.vertices
+        faces = mesh.faces
         
-        # Generate thumbnail path
+        # Create a 3D mesh plot
+        ax.plot_trisurf(vertices[:, 0], vertices[:, 1], faces, vertices[:, 2],
+                       color='#e94560', alpha=0.9, edgecolor='none', 
+                       linewidth=0, antialiased=True, shade=True)
+        
+        # Set viewpoint (isometric-like)
+        ax.view_init(elev=30, azim=45)
+        
+        # Remove axes
+        ax.set_axis_off()
+        
+        # Auto-scale to fit
+        ax.auto_scale_xyz(vertices[:, 0], vertices[:, 1], vertices[:, 2])
+        
+        # Set aspect ratio
+        ax.set_box_aspect([1,1,1])
+        
+        # Save thumbnail (800x600 pixels)
         thumb_path = os.path.join(thumbnails_dir, f"{name}.png")
-        
-        # Render and save
-        view.saveImage(thumb_path, 800, 600, 'White')
+        fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
+        plt.savefig(thumb_path, dpi=100, facecolor='white', edgecolor='none')
+        plt.close(fig)
         
         safe_print(f"  Thumbnail: {name}.png (800x600)")
         return True
         
     except Exception as e:
-        safe_print(f"  Warning: Thumbnail generation failed: {e}")
+        safe_print(f"  Warning: STL thumbnail generation failed: {e}")
         return False
+
+
+def generate_thumbnail(doc, obj, name, thumbnails_dir):
+    """Generate a thumbnail image (800x600) for the given object."""
+    # This function is called during export but we'll generate from STL after
+    return False
 
 
 def main():
@@ -125,10 +157,12 @@ def main():
     thumbnails_dir = os.path.join(exports_dir, "thumbnails")
     os.makedirs(thumbnails_dir, exist_ok=True)
     
-    if HAS_GUI:
-        safe_print("FreeCADGui available - thumbnails will be generated")
+    if HAS_TRIMESH:
+        safe_print("trimesh available - thumbnails will be generated from STL files")
+    elif HAS_GUI:
+        safe_print("FreeCADGui available but not used (prefer STL-based generation)")
     else:
-        safe_print("FreeCADGui not available - skipping thumbnail generation")
+        safe_print("No thumbnail generation available (install trimesh: pip install trimesh matplotlib)")
 
     # Non-recursive: only *.FCStd directly in freecad_dir
     pattern = os.path.join(freecad_dir, "*.FCStd")
@@ -157,9 +191,6 @@ def main():
                     Part.export([obj], step_path)
                     safe_print(f"  Exported: {name}.stl + {name}.step")
                     
-                    # Generate thumbnail
-                    generate_thumbnail(doc, obj, name, thumbnails_dir)
-                    
                     exported = True
                     success_count += 1
                     break  # first valid object
@@ -175,6 +206,16 @@ def main():
             continue  # Skip this file, continue with next
 
     safe_print(f"Export complete: {success_count} models exported, {error_count} errors -> {exports_dir}/")
+    
+    # Generate thumbnails from STL files if trimesh is available
+    if HAS_TRIMESH:
+        safe_print("Generating thumbnails from STL files...")
+        thumbnail_count = 0
+        for stl_file in glob.glob(os.path.join(exports_dir, "*.stl")):
+            name = os.path.splitext(os.path.basename(stl_file))[0]
+            if generate_thumbnail_from_stl(stl_file, thumbnails_dir, name):
+                thumbnail_count += 1
+        safe_print(f"Generated {thumbnail_count} thumbnails -> {thumbnails_dir}/")
 
 
 main()

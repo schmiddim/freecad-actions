@@ -5,6 +5,8 @@ RUN mamba create -n freecad -y --quiet \
         python=3.12 \
         freecad \
         pyyaml \
+        trimesh \
+        matplotlib \
     && mamba clean -afy
 
 # --- Runtime stage: only the conda environment, no package manager overhead ---
