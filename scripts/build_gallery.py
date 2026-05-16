@@ -155,6 +155,24 @@ def collect_models(config):
         fcstd_path = os.path.join(freecad_dir, f"{name}.FCStd")
         has_fcstd = os.path.exists(fcstd_path)
 
+        # Check if generated thumbnail exists
+        thumbnails_dir = os.path.join(exports_dir, "thumbnails")
+        thumbnail_path = os.path.join(thumbnails_dir, f"{name}.png")
+        has_thumbnail = os.path.exists(thumbnail_path)
+
+        # Determine primary image
+        # Priority: 1) metadata override, 2) first manual image, 3) generated thumbnail
+        primary_image = None
+        if meta.get("primaryImage"):
+            # User explicitly set primaryImage in metadata
+            primary_image = meta["primaryImage"]
+        elif meta.get("images") and len(meta["images"]) > 0:
+            # First manual image from images array
+            primary_image = f"images/{name}/{meta['images'][0]['filename']}"
+        elif has_thumbnail:
+            # Fallback: auto-generated thumbnail
+            primary_image = f"thumbnails/{name}.png"
+
         model = {
             "name": name,
             "stl": f"models/{name}.stl",
@@ -164,6 +182,8 @@ def collect_models(config):
             "description": meta.get("description", ""),
             "tags": meta.get("tags", []),
             "images": meta.get("images", []),
+            "thumbnail": f"thumbnails/{name}.png" if has_thumbnail else None,
+            "primaryImage": primary_image,
             "links": meta.get("links", {}),
             "license": meta.get("license", ""),
             "has_metadata": has_metadata,
@@ -207,6 +227,15 @@ def copy_assets(config, metadata_dir):
     os.makedirs(freecad_dst, exist_ok=True)
     for fcstd in glob.glob(os.path.join(freecad_dir, "*.FCStd")):
         shutil.copy(fcstd, freecad_dst)
+
+    # Copy thumbnails
+    thumbnails_src = os.path.join(exports_dir, "thumbnails")
+    if os.path.isdir(thumbnails_src):
+        thumbnails_dst = os.path.join(output_dir, "thumbnails")
+        os.makedirs(thumbnails_dst, exist_ok=True)
+        for thumb in glob.glob(os.path.join(thumbnails_src, "*.png")):
+            shutil.copy(thumb, thumbnails_dst)
+        safe_print(f"Copied {len(glob.glob(os.path.join(thumbnails_src, '*.png')))} thumbnails")
 
     # Copy metadata images
     images_src = os.path.join(metadata_dir, "images")
@@ -448,6 +477,15 @@ def build_discovery(config, models, profile, base_url):
                 "tags": m.get("tags") or [],
                 "license": m.get("license") or None,
                 "updated_at": datetime.utcfromtimestamp(m["mtime"]).strftime('%Y-%m-%dT%H:%M:%SZ'),
+                "thumbnail_url": f"{base_url}/{m['thumbnail']}" if m.get("thumbnail") else None,
+                "primary_image_url": f"{base_url}/{m['primaryImage']}" if m.get("primaryImage") else None,
+                "images": [
+                    {
+                        "url": f"{base_url}/images/{m['name']}/{img['filename']}",
+                        "caption": img.get("caption")
+                    }
+                    for img in m.get("images", [])
+                ],
                 "links": m.get("links") or {},
             }
             for m in models

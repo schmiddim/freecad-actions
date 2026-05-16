@@ -9,14 +9,7 @@
   <link rel="alternate" type="application/rss+xml" title="RSS Feed" href="rss.xml">
   <link rel="alternate" type="application/atom+xml" title="Atom Feed" href="atom.xml">
 
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
-      }
-    }
-  </script>
+
   <style>
     :root {
       --bg: #1a1a2e;
@@ -229,8 +222,12 @@
   <div class="grid" id="grid">
     {% for model in models %}
     <a class="card" href="view/{{ model.name }}.html" data-tags="{{ model.tags | join(',') }}">
-      <div class="thumbnail" id="thumb-{{ loop.index0 }}">
-        <span class="loading">Loading...</span>
+      <div class="thumbnail">
+        {% if model.primaryImage %}
+        <img src="{{ model.primaryImage }}" alt="{{ model.title }}" loading="lazy">
+        {% else %}
+        <span class="loading">No preview</span>
+        {% endif %}
       </div>
       <div class="card-info">
         <h3>{{ model.title }}</h3>
@@ -266,81 +263,9 @@ toggle.addEventListener('click', () => {
 });
 </script>
 
-<script type="module">
-import * as THREE from 'three';
-import { STLLoader } from 'three/addons/loaders/STLLoader.js';
-
-const models = {{ models_json | safe }};
-const loader = new STLLoader();
-
-let thumbRenderer = null;
-let thumbScene = null;
-let thumbCamera = null;
-
-function initThumbRenderer() {
-  thumbRenderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
-  thumbRenderer.setSize(400, 300);
-  thumbRenderer.setPixelRatio(1);
-  thumbScene = new THREE.Scene();
-  thumbScene.background = new THREE.Color(
-    document.documentElement.getAttribute('data-theme') === 'light' ? 0xe8eaf0 : 0x0f0f23
-  );
-  thumbCamera = new THREE.PerspectiveCamera(45, 400/300, 0.1, 1000);
-  thumbScene.add(new THREE.AmbientLight(0x404040, 3));
-  const d1 = new THREE.DirectionalLight(0xffffff, 1);
-  d1.position.set(1, 1, 1);
-  thumbScene.add(d1);
-  const d2 = new THREE.DirectionalLight(0xffffff, 0.5);
-  d2.position.set(-1, -1, -1);
-  thumbScene.add(d2);
-}
-
-function renderThumbnail(stlPath, callback) {
-  if (!thumbRenderer) initThumbRenderer();
-  loader.load(stlPath, geometry => {
-    const toRemove = thumbScene.children.filter(c => c.type === 'Mesh');
-    toRemove.forEach(m => thumbScene.remove(m));
-    const material = new THREE.MeshStandardMaterial({ color: 0xe94560, metalness: 0.3, roughness: 0.6 });
-    const mesh = new THREE.Mesh(geometry, material);
-    geometry.computeBoundingBox();
-    const center = geometry.boundingBox.getCenter(new THREE.Vector3());
-    const size = geometry.boundingBox.getSize(new THREE.Vector3());
-    mesh.position.sub(center);
-    mesh.rotation.x = -0.5;
-    mesh.rotation.y = 0.5;
-    thumbScene.add(mesh);
-    thumbCamera.position.set(0, 0, Math.max(size.x, size.y, size.z) * 2.5);
-    thumbCamera.lookAt(0, 0, 0);
-    thumbRenderer.render(thumbScene, thumbCamera);
-    callback(thumbRenderer.domElement.toDataURL('image/png'));
-    geometry.dispose();
-    material.dispose();
-  });
-}
-
-const grid = document.getElementById('grid');
-const cards = grid.querySelectorAll('.card');
-
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      const card = entry.target;
-      const thumb = card.querySelector('.thumbnail');
-      const name = card.href.split('/').pop().replace('.html', '');
-      const model = models.find(m => m.name === name);
-      if (thumb && model && !thumb.dataset.loaded) {
-        thumb.dataset.loaded = 'true';
-        renderThumbnail(model.stl, (dataUrl) => {
-          thumb.innerHTML = `<img src="${dataUrl}" alt="${model.name}">`;
-        });
-      }
-      observer.unobserve(card);
-    }
-  });
-}, { rootMargin: '200px' });
-
-cards.forEach(card => observer.observe(card));
-
+<script>
+// Tag filtering
+const cards = document.querySelectorAll('.card');
 document.querySelectorAll('.tag-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));

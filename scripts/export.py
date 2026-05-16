@@ -9,6 +9,14 @@ import os
 import sys
 import glob
 
+# Try to import FreeCADGui for thumbnail generation
+try:
+    import FreeCADGui
+    HAS_GUI = True
+except ImportError:
+    HAS_GUI = False
+    safe_print = print  # Fallback for safe_print before it's defined
+
 # Ensure UTF-8 encoding for stdout/stderr
 if sys.version_info >= (3, 7):
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
@@ -73,12 +81,54 @@ def load_config():
     return config
 
 
+def generate_thumbnail(doc, obj, name, thumbnails_dir):
+    """Generate a thumbnail image (800x600) for the given object."""
+    if not HAS_GUI:
+        return False
+    
+    try:
+        # Initialize GUI if needed
+        if not FreeCADGui.ActiveDocument:
+            FreeCADGui.showMainWindow()
+            FreeCADGui.activateWorkbench("PartWorkbench")
+        
+        # Set up view
+        view = FreeCADGui.ActiveDocument.ActiveView
+        view.viewAxonometric()
+        view.fitAll()
+        
+        # Set white background
+        view.setBackgroundColor(1.0, 1.0, 1.0, 1.0)
+        
+        # Generate thumbnail path
+        thumb_path = os.path.join(thumbnails_dir, f"{name}.png")
+        
+        # Render and save
+        view.saveImage(thumb_path, 800, 600, 'White')
+        
+        safe_print(f"  Thumbnail: {name}.png (800x600)")
+        return True
+        
+    except Exception as e:
+        safe_print(f"  Warning: Thumbnail generation failed: {e}")
+        return False
+
+
 def main():
     config = load_config()
     freecad_dir = config["freecad_dir"]
     exports_dir = config["exports_dir"]
 
     os.makedirs(exports_dir, exist_ok=True)
+    
+    # Create thumbnails directory
+    thumbnails_dir = os.path.join(exports_dir, "thumbnails")
+    os.makedirs(thumbnails_dir, exist_ok=True)
+    
+    if HAS_GUI:
+        safe_print("FreeCADGui available - thumbnails will be generated")
+    else:
+        safe_print("FreeCADGui not available - skipping thumbnail generation")
 
     # Non-recursive: only *.FCStd directly in freecad_dir
     pattern = os.path.join(freecad_dir, "*.FCStd")
@@ -106,6 +156,10 @@ def main():
                     Mesh.export([obj], stl_path)
                     Part.export([obj], step_path)
                     safe_print(f"  Exported: {name}.stl + {name}.step")
+                    
+                    # Generate thumbnail
+                    generate_thumbnail(doc, obj, name, thumbnails_dir)
+                    
                     exported = True
                     success_count += 1
                     break  # first valid object
