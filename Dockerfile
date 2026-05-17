@@ -1,5 +1,9 @@
 FROM condaforge/miniforge3:latest AS builder
 
+# Note: Alpine Linux is not used because FreeCAD is not available in Alpine repos
+# FreeCAD requires conda-forge or Debian/Ubuntu packages
+# This multi-stage build minimizes the final image size (~600MB instead of ~2GB)
+
 # Install FreeCAD and dependencies into a separate environment
 RUN mamba create -n freecad -y --quiet \
         python=3.12 \
@@ -34,6 +38,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libxrandr2 \
         openscad \
         xvfb \
+        xauth \
         mesa-utils \
     && rm -rf /var/lib/apt/lists/*
 

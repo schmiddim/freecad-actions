@@ -497,8 +497,20 @@ def main():
 
     for fcstd in fcstd_files:
         try:
+            # Handle Unicode filenames properly
+            fcstd_basename = os.path.basename(fcstd)
+            name = os.path.splitext(fcstd_basename)[0]
+            
+            # Try to encode/decode to catch problematic filenames early
+            try:
+                name_safe = name.encode('utf-8').decode('utf-8')
+            except (UnicodeEncodeError, UnicodeDecodeError) as ue:
+                safe_print(f"  Skipping file with problematic characters: {fcstd_basename}")
+                safe_print(f"  Please rename to use only ASCII characters (a-z, 0-9, -, _)")
+                error_count += 1
+                continue
+            
             doc = FreeCAD.openDocument(fcstd)
-            name = os.path.splitext(os.path.basename(fcstd))[0]
 
             exported = False
             for obj in doc.Objects:

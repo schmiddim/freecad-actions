@@ -53,7 +53,7 @@ step_gallery() {
     gallery_script="$(find_script scripts/build_gallery.py)"
 
     echo "==> Installing Python dependencies..."
-    "${PYTHON}" -m pip install --quiet jinja2 pyyaml
+    "${PYTHON}" -m pip install --quiet jinja2 pyyaml 2>&1 | grep -v "syncthing-gtk" | grep -v "new release of pip" || true
 
     echo "==> Building gallery HTML..."
     "${PYTHON}" "${gallery_script}"
