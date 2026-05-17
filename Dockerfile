@@ -40,10 +40,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         xvfb \
         xauth \
         mesa-utils \
-    && rm -rf /var/lib/apt/lists/*
+        locales \
+    && rm -rf /var/lib/apt/lists/* \
+    && echo "en_US.UTF-8 UTF-8" > /etc/locale.gen \
+    && locale-gen
 
 ENV PATH="/opt/freecad/bin:$PATH" \
-    LD_LIBRARY_PATH="/opt/freecad/lib:$LD_LIBRARY_PATH"
+    LD_LIBRARY_PATH="/opt/freecad/lib:$LD_LIBRARY_PATH" \
+    LANG=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8 \
+    PYTHONIOENCODING=utf-8
 
 WORKDIR /workspace
 

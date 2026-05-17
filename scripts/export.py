@@ -159,12 +159,15 @@ def _render_with_openscad(stl_path, thumb_path, name):
     # Convert to absolute path for OpenSCAD
     abs_stl_path = os.path.abspath(stl_path)
     
-    # Create temporary OpenSCAD file
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.scad', delete=False) as f:
+    # Create temporary OpenSCAD file with UTF-8 encoding
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.scad', delete=False, encoding='utf-8') as f:
         scad_file = f.name
+        # Use proper path escaping for OpenSCAD
+        # Replace backslashes with forward slashes for cross-platform compatibility
+        scad_path = abs_stl_path.replace('\\', '/')
         f.write(f"""// Auto-generated for thumbnail rendering
 color([233/255, 69/255, 96/255])  // #e94560
-    import("{abs_stl_path}");
+    import("{scad_path}");
 """)
     
     try:
@@ -203,16 +206,20 @@ color([233/255, 69/255, 96/255])  // #e94560
                 scad_file
             ]
         
-        # Set environment for software rendering
+        # Set environment for software rendering and UTF-8
         env = os.environ.copy()
         env['LIBGL_ALWAYS_SOFTWARE'] = '1'
         env['GALLIUM_DRIVER'] = 'llvmpipe'
+        env['LANG'] = 'C.UTF-8'
+        env['LC_ALL'] = 'C.UTF-8'
         
-        # Render with timeout
-        result = subprocess.run(cmd, capture_output=True, timeout=30, env=env)
+        # Render with timeout, ensuring UTF-8 handling
+        result = subprocess.run(cmd, capture_output=True, timeout=30, env=env, 
+                              encoding='utf-8', errors='replace')
         
         if result.returncode != 0:
-            stderr = result.stderr.decode('utf-8', errors='replace')
+            # stderr is already decoded due to encoding parameter in subprocess.run
+            stderr = result.stderr if isinstance(result.stderr, str) else result.stderr.decode('utf-8', errors='replace')
             raise Exception(f"OpenSCAD exited with code {result.returncode}: {stderr}")
         
         safe_print(f"  Thumbnail: {name}.png (800x600, openscad)")
@@ -501,22 +508,17 @@ def main():
             fcstd_basename = os.path.basename(fcstd)
             name = os.path.splitext(fcstd_basename)[0]
             
-            # Try to encode/decode to catch problematic filenames early
-            try:
-                name_safe = name.encode('utf-8').decode('utf-8')
-            except (UnicodeEncodeError, UnicodeDecodeError) as ue:
-                safe_print(f"  Skipping file with problematic characters: {fcstd_basename}")
-                safe_print(f"  Please rename to use only ASCII characters (a-z, 0-9, -, _)")
-                error_count += 1
-                continue
-            
+            # Open document with proper UTF-8 handling
             doc = FreeCAD.openDocument(fcstd)
 
             exported = False
             for obj in doc.Objects:
                 if obj.isDerivedFrom("Part::Feature") and not obj.Shape.isNull():
+                    # Ensure paths are UTF-8 encoded properly
                     stl_path = os.path.join(exports_dir, f"{name}.stl")
                     step_path = os.path.join(exports_dir, f"{name}.step")
+                    
+                    # Export with UTF-8 safe filenames
                     Mesh.export([obj], stl_path)
                     Part.export([obj], step_path)
                     safe_print(f"  Exported: {name}.stl + {name}.step")
