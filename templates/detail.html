@@ -374,10 +374,8 @@
           <h3>How to add metadata for this model</h3>
           <p>Create a file named <code>metadata/{{ model.name }}.yaml</code> in your repository with the following content:</p>
           
-          <div class="yaml-template">
-            <button class="copy-btn" onclick="copyYamlTemplate(event)">Copy</button><span class="yaml-comment"># yaml-language-server: $schema=https://raw.githubusercontent.com/schmiddim/freecad-action/refs/tags/{{ git_tag }}/schemas/meta.schema.json</span>
-
-<span class="yaml-key">title</span>: <span class="yaml-string">"{{ model.title }}"</span>
+          <div class="yaml-template"><button class="copy-btn" onclick="copyYamlTemplate(event)">Copy</button><span class="yaml-comment"># yaml-language-server: $schema=https://raw.githubusercontent.com/schmiddim/freecad-action/refs/tags/{{ git_tag }}/schemas/meta.schema.json
+</span><span class="yaml-key">title</span>: <span class="yaml-string">"{{ model.title }}"</span>
 <span class="yaml-key">description</span>: <span class="yaml-string">"Add your description here"</span>
 <span class="yaml-key">tags</span>:
   - <span class="yaml-string">tag1</span>
