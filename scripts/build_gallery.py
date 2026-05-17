@@ -294,13 +294,13 @@ def find_templates_dir():
     """Find the templates directory.
 
     Lookup order:
-      1. ./templates  (user's repo has custom templates)
+      1. ./scripts/templates  (default location in repo)
       2. $ACTION_PATH/templates  (bundled default templates from the action)
-      3. Directory of this script/../templates  (local dev / Makefile usage)
+      3. Directory of this script/templates  (local dev / Makefile usage)
 
     Returns the first existing path, or raises FileNotFoundError.
     """
-    candidates = ["templates"]
+    candidates = ["scripts/templates"]
 
     action_path = os.environ.get("ACTION_PATH")
     if action_path:
@@ -308,7 +308,7 @@ def find_templates_dir():
 
     # Fallback: relative to this script (for local dev / Makefile)
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    candidates.append(os.path.join(script_dir, "..", "templates"))
+    candidates.append(os.path.join(script_dir, "templates"))
 
     for candidate in candidates:
         resolved = os.path.realpath(candidate)
@@ -338,6 +338,13 @@ def build_gallery(config, models, profile):
 
     # Copy assets
     copy_assets(config, metadata_dir)
+    
+    # Copy styles.css from templates to output directory
+    styles_src = os.path.join(templates_dir, "styles.css")
+    if os.path.exists(styles_src):
+        styles_dst = os.path.join(output_dir, "styles.css")
+        shutil.copy(styles_src, styles_dst)
+        safe_print("Copied styles.css to gallery")
 
     # Collect all tags and categories for filter buttons
     all_tags = collect_all_tags(models)
@@ -348,6 +355,10 @@ def build_gallery(config, models, profile):
         [{"name": m["name"], "stl": m["stl"]} for m in models]
     )
 
+    # Get git information for all templates
+    git_tag = get_git_tag()
+    git_source_url = get_git_source_url()
+
     # Render index page
     gallery_template = env.get_template("gallery.html")
     index_html = gallery_template.render(
@@ -357,6 +368,7 @@ def build_gallery(config, models, profile):
         all_tags=all_tags,
         all_categories=all_categories,
         title=config["title"],
+        git_source_url=git_source_url,
     )
     index_path = os.path.join(output_dir, "index.html")
     with open(index_path, "w") as f:
@@ -364,8 +376,6 @@ def build_gallery(config, models, profile):
 
     # Render detail pages
     detail_template = env.get_template("detail.html")
-    git_tag = get_git_tag()
-    git_source_url = get_git_source_url()
     for i, model in enumerate(models):
         prev_model = models[i - 1] if i > 0 else None
         next_model = models[i + 1] if i < len(models) - 1 else None
@@ -389,6 +399,7 @@ def build_gallery(config, models, profile):
         about_html = about_template.render(
             profile=profile,
             title=config["title"],
+            git_source_url=git_source_url,
         )
         about_path = os.path.join(output_dir, "about.html")
         with open(about_path, "w") as f:
