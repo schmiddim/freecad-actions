@@ -25,9 +25,13 @@ COPY --from=builder /opt/conda/envs/freecad /opt/freecad
 # Add required runtime libraries and OpenSCAD for fast thumbnail rendering
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libgl1 \
+        libgl1-mesa-dri \
+        libgl1-mesa-glx \
         libglib2.0-0 \
         libxmu6 \
         libxi6 \
+        libxrender1 \
+        libxrandr2 \
         openscad \
         xvfb \
         mesa-utils \

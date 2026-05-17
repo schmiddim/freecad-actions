@@ -173,8 +173,12 @@ color([233/255, 69/255, 96/255])  // #e94560
         
         if has_xvfb:
             # Use xvfb-run for headless preview mode (supports colors)
+            # --auto-servernum: automatically pick server number
+            # -s "-screen ...": virtual screen configuration
             cmd = [
-                'xvfb-run', '-a', '-s', '-screen 0 1024x768x24',
+                'xvfb-run',
+                '--auto-servernum',
+                '--server-args=-screen 0 1024x768x24 -ac +extension GLX +render -noreset',
                 'openscad',
                 # NO --render flag! Preview mode supports color()
                 '--camera=1,1,1,55,0,45,0',  # Isometric-like view
@@ -199,8 +203,17 @@ color([233/255, 69/255, 96/255])  // #e94560
                 scad_file
             ]
         
+        # Set environment for software rendering
+        env = os.environ.copy()
+        env['LIBGL_ALWAYS_SOFTWARE'] = '1'
+        env['GALLIUM_DRIVER'] = 'llvmpipe'
+        
         # Render with timeout
-        subprocess.run(cmd, check=True, capture_output=True, timeout=30)
+        result = subprocess.run(cmd, capture_output=True, timeout=30, env=env)
+        
+        if result.returncode != 0:
+            stderr = result.stderr.decode('utf-8', errors='replace')
+            raise Exception(f"OpenSCAD exited with code {result.returncode}: {stderr}")
         
         safe_print(f"  Thumbnail: {name}.png (800x600, openscad)")
         return True
