@@ -173,17 +173,39 @@ color([233/255, 69/255, 96/255])  // #e94560
 """)
     
     try:
-        # Render with OpenSCAD
-        subprocess.run([
-            'openscad',
-            '--camera=1,1,1,55,0,45,0',  # Isometric-like view
-            '--autocenter',
-            '--viewall',
-            '--imgsize=800,600',
-            '--projection=p',  # Perspective
-            '-o', thumb_path,
-            scad_file
-        ], check=True, capture_output=True, timeout=30)
+        # Check if we need xvfb for headless rendering
+        has_xvfb = shutil.which('xvfb-run') is not None
+        
+        if has_xvfb:
+            # Use xvfb-run for headless rendering (most reliable)
+            cmd = [
+                'xvfb-run', '-a', '-s', '-screen 0 1024x768x24',
+                'openscad',
+                '--render',  # Force render mode
+                '--camera=1,1,1,55,0,45,0',  # Isometric-like view
+                '--autocenter',
+                '--viewall',
+                '--imgsize=800,600',
+                '--projection=p',  # Perspective
+                '-o', thumb_path,
+                scad_file
+            ]
+        else:
+            # Direct OpenSCAD call (for systems with display)
+            cmd = [
+                'openscad',
+                '--render',  # Force render mode
+                '--camera=1,1,1,55,0,45,0',  # Isometric-like view
+                '--autocenter',
+                '--viewall',
+                '--imgsize=800,600',
+                '--projection=p',  # Perspective
+                '-o', thumb_path,
+                scad_file
+            ]
+        
+        # Render with timeout
+        subprocess.run(cmd, check=True, capture_output=True, timeout=30)
         
         safe_print(f"  Thumbnail: {name}.png (800x600, openscad)")
         return True

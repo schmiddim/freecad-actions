@@ -27,6 +27,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libxmu6 \
         libxi6 \
         openscad \
+        xvfb \
+        mesa-utils \
     && rm -rf /var/lib/apt/lists/*
 
 ENV PATH="/opt/freecad/bin:$PATH" \
