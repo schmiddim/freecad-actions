@@ -1,0 +1,14 @@
+# yaml-language-server:  $schema=https://raw.githubusercontent.com/schmiddim/freecad-action/refs/tags/v1.5.0/schemas/meta.schema.json
+title: Aeropress Filter and Spoon holder
+description: Filter holder for the Aeropress. Base has been angled. Makes it easier to grab a single filter.
+tags:
+  - aeropress
+  - Coffee
+  - Filter
+license: "CC-BY-SA-4.0"
+links:
+  printables: https://www.printables.com/model/1073781-aeropress-filter-and-spoon-holder
+  thingiverse: https://www.thingiverse.com/thing:6832221
+images:
+  - filename: 20241115_083059.jpg
+  - filename: 2.jpg
