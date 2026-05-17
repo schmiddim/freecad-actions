@@ -143,8 +143,16 @@
       padding: 0.2rem 0.6rem;
       border-radius: 12px;
     }
-    .external-links {
+    .external-links-wrapper {
       padding: 0 1.5rem 1.5rem;
+    }
+    .external-links-label {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+    .external-links {
       display: flex;
       gap: 0.5rem;
       flex-wrap: wrap;
@@ -159,14 +167,13 @@
       transition: all 0.2s;
     }
     .external-links a:hover { color: var(--text); border-color: var(--accent); }
-    .images-gallery {
+    .combined-gallery {
       padding: 1.5rem;
       border-top: 1px solid var(--border);
     }
-    .images-gallery h3 {
-      font-size: 1rem;
+    .gallery-main {
+      position: relative;
       margin-bottom: 1rem;
-      color: var(--muted);
     }
     .hero-image {
       width: 100%;
@@ -176,39 +183,76 @@
       object-fit: contain;
       background: var(--viewer-bg);
       cursor: pointer;
-      margin-bottom: 1rem;
+      display: none;
     }
-    .images-grid {
+    .hero-image.active {
+      display: block;
+    }
+    .viewer.in-gallery {
+      height: 500px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      display: none;
+    }
+    .viewer.in-gallery.active {
+      display: block;
+    }
+    .gallery-thumbs {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-      gap: 0.75rem;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 1rem;
     }
-    .images-grid figure { 
-      margin: 0; 
-      position: relative;
-    }
-    .images-grid img {
-      width: 100%;
-      height: 120px;
-      object-fit: cover;
-      border-radius: 8px;
-      border: 2px solid var(--border);
+    .gallery-thumb-wrapper {
       cursor: pointer;
-      transition: all 0.2s;
     }
-    .images-grid img:hover { 
+    .gallery-thumb {
+      position: relative;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 2px solid var(--border);
+      transition: all 0.2s;
+      height: 100px;
+      background: var(--viewer-bg);
+      margin-bottom: 0.4rem;
+    }
+    .gallery-thumb-wrapper:hover .gallery-thumb { 
       transform: scale(1.05); 
       border-color: var(--accent);
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
-    .images-grid img.active {
+    .gallery-thumb.active {
       border-color: var(--accent);
       box-shadow: 0 0 0 2px var(--accent);
     }
-    .images-grid figcaption {
+    .gallery-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .gallery-thumb.is-3d {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .gallery-thumb.is-3d::before {
+      content: '3D';
+      font-size: 1.8rem;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .gallery-thumb.is-3d::after {
+      content: 'Model';
+      font-size: 0.65rem;
+      color: var(--muted);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .gallery-thumb-caption {
       font-size: 0.7rem;
       color: var(--muted);
-      margin-top: 0.4rem;
       text-align: center;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -492,9 +536,6 @@
     {% endif %}
 
     <div class="viewer-wrapper">
-      <div class="viewer" id="viewer">
-        <div class="loading">Loading 3D model...</div>
-      </div>
       <div class="info">
         <h2>{{ model.title }}</h2>
         <div class="info-actions">
@@ -515,31 +556,57 @@
       </div>
       {% endif %}
       {% if model.links %}
-      <div class="external-links">
-        {% for platform, url in model.links.items() %}
-        <a href="{{ url }}" target="_blank" rel="noopener">{{ platform }}</a>
-        {% endfor %}
+      <div class="external-links-wrapper">
+        <div class="external-links-label">Links</div>
+        <div class="external-links">
+          {% for platform, url in model.links.items() %}
+          <a href="{{ url }}" target="_blank" rel="noopener">{{ platform }}</a>
+          {% endfor %}
+        </div>
       </div>
       {% endif %}
       {% if model.license %}
       <div class="license">License: {{ model.license }}</div>
       {% endif %}
-      {% if model.images %}
-      <div class="images-gallery">
-        <h3>Photos</h3>
-        <img id="hero-image" class="hero-image" src="../images/{{ model.name }}/{{ model.images[0].filename }}" alt="{{ model.images[0].caption or model.title }}" onclick="openLightbox(0)">
-        <div class="images-grid">
+      
+      <!-- Combined Gallery: 3D Model + Photos -->
+      <div class="combined-gallery">
+        <div class="gallery-main">
+          <!-- 3D Viewer (shown by default) -->
+          <div class="viewer in-gallery active" id="viewer">
+            <div class="loading">Loading 3D model...</div>
+          </div>
+          
+          <!-- Photo images (hidden by default) -->
+          {% if model.images %}
           {% for img in model.images %}
-          <figure>
-            <img src="../images/{{ model.name }}/{{ img.filename }}" alt="{{ img.caption or model.title }}" loading="lazy" onclick="selectImage({{ loop.index0 }})" class="{% if loop.index0 == 0 %}active{% endif %}" data-index="{{ loop.index0 }}">
-            {% if img.caption %}
-            <figcaption>{{ img.caption }}</figcaption>
-            {% endif %}
-          </figure>
+          <img class="hero-image" src="../images/{{ model.name }}/{{ img.filename }}" alt="{{ img.caption or model.title }}" data-index="{{ loop.index0 }}" onclick="openLightbox({{ loop.index0 }})">
           {% endfor %}
+          {% endif %}
+        </div>
+        
+        <!-- Thumbnails: 3D + Photos -->
+        <div class="gallery-thumbs">
+          <!-- 3D Thumbnail -->
+          <div class="gallery-thumb-wrapper" onclick="showGalleryItem('3d')">
+            <div class="gallery-thumb is-3d active"></div>
+          </div>
+          
+          <!-- Photo Thumbnails -->
+          {% if model.images %}
+          {% for img in model.images %}
+          <div class="gallery-thumb-wrapper" onclick="showGalleryItem({{ loop.index0 }})">
+            <div class="gallery-thumb">
+              <img src="../images/{{ model.name }}/{{ img.filename }}" alt="{{ img.caption or model.title }}">
+            </div>
+            {% if img.caption %}
+            <div class="gallery-thumb-caption">{{ img.caption }}</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+          {% endif %}
         </div>
       </div>
-      {% endif %}
     </div>
 
     <div class="nav">
@@ -695,23 +762,42 @@ function copyYamlTemplate(event) {
   });
 }
 
-// Image gallery functionality
+// Combined gallery functionality (3D + Photos)
 {% if model.images %}
 const images = {{ model.images | tojson }};
 const modelName = "{{ model.name }}";
-let currentImageIndex = 0;
+{% endif %}
+let currentGalleryItem = '3d';
 
-function selectImage(index) {
-  currentImageIndex = index;
-  const heroImage = document.getElementById('hero-image');
-  const thumbnails = document.querySelectorAll('.images-grid img');
+function showGalleryItem(item) {
+  const viewer = document.getElementById('viewer');
+  const heroImages = document.querySelectorAll('.hero-image');
+  const thumbWrappers = document.querySelectorAll('.gallery-thumb-wrapper');
   
-  heroImage.src = `../images/${modelName}/${images[index].filename}`;
-  heroImage.alt = images[index].caption || "{{ model.title }}";
-  
-  thumbnails.forEach((thumb, i) => {
-    thumb.classList.toggle('active', i === index);
+  // Hide all
+  viewer.classList.remove('active');
+  heroImages.forEach(img => img.classList.remove('active'));
+  thumbWrappers.forEach(wrapper => {
+    wrapper.querySelector('.gallery-thumb').classList.remove('active');
   });
+  
+  if (item === '3d') {
+    // Show 3D viewer
+    viewer.classList.add('active');
+    thumbWrappers[0].querySelector('.gallery-thumb').classList.add('active');
+    currentGalleryItem = '3d';
+  } else {
+    // Show photo
+    const photoIndex = parseInt(item);
+    heroImages[photoIndex].classList.add('active');
+    thumbWrappers[photoIndex + 1].querySelector('.gallery-thumb').classList.add('active'); // +1 because first is 3D
+    currentGalleryItem = photoIndex;
+  }
+}
+
+{% if model.images %}
+function selectImage(index) {
+  showGalleryItem(index);
 }
 
 function openLightbox(index) {
