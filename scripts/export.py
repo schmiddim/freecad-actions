@@ -118,7 +118,7 @@ def generate_thumbnail_from_stl(stl_path, thumbnails_dir, name):
     """Generate high-quality thumbnail from STL file."""
     thumb_path = os.path.join(thumbnails_dir, f"{name}.png")
     
-    # Try OpenSCAD first (fastest)
+    #  Try OpenSCAD first (fastest)
     if HAS_OPENSCAD:
         try:
             return _render_with_openscad(stl_path, thumb_path, name)
