@@ -60,7 +60,10 @@ runs:
     - name: Install FreeCAD (conda)
       if: inputs.use-docker != 'true'
       shell: bash -el {0}
-      run: mamba install -c conda-forge python=3.12 freecad pyyaml -y --quiet
+      run: |
+        mamba install -c conda-forge python=3.12 freecad pyyaml -y --quiet
+        # Install OpenSCAD for fast thumbnail rendering
+        sudo apt-get update && sudo apt-get install -y openscad
 
     - name: Export FCStd (conda)
       if: inputs.use-docker != 'true'

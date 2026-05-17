@@ -20,12 +20,13 @@ LABEL org.opencontainers.image.licenses="MIT"
 # Copy the conda environment from builder
 COPY --from=builder /opt/conda/envs/freecad /opt/freecad
 
-# Add required runtime libraries
+# Add required runtime libraries and OpenSCAD for fast thumbnail rendering
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libgl1 \
         libglib2.0-0 \
         libxmu6 \
         libxi6 \
+        openscad \
     && rm -rf /var/lib/apt/lists/*
 
 ENV PATH="/opt/freecad/bin:$PATH" \
