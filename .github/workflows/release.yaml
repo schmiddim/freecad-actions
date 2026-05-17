@@ -3,6 +3,9 @@ name: Release
 on:
   push:
     tags: ['v*.*.*']
+  workflow_run:
+    workflows: ["Build and Publish Docker Image"]
+    types: [completed]
 
 permissions:
   contents: write
@@ -10,6 +13,10 @@ permissions:
 
 jobs:
   moving-tags:
+    # Only run if Docker build succeeded (or if triggered by tag without workflow_run)
+    if: |
+      github.event_name == 'push' || 
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6

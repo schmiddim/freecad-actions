@@ -3,11 +3,7 @@ name: Build and Publish Docker Image
 on:
   push:
     branches: [master]
-    paths:
-      - 'Dockerfile'
-      - 'scripts/export.py'
-  release:
-    types: [published]
+    tags: ['v*.*.*']  # Build on master push or version tags
   workflow_dispatch:
 
 env:
