@@ -346,6 +346,17 @@ def build_gallery(config, models, profile):
         shutil.copy(styles_src, styles_dst)
         safe_print("Copied styles.css to gallery")
 
+    # Copy user-provided custom CSS if configured
+    custom_css_name = None
+    custom_css_path = config.get("custom_css")
+    if custom_css_path and os.path.exists(custom_css_path):
+        custom_css_name = "custom.css"
+        custom_dst = os.path.join(output_dir, custom_css_name)
+        shutil.copy(custom_css_path, custom_dst)
+        safe_print(f"Copied custom CSS from '{custom_css_path}' to gallery")
+    elif custom_css_path:
+        safe_print(f"Warning: custom_css '{custom_css_path}' not found, skipping")
+
     # Collect all tags and categories for filter buttons
     all_tags = collect_all_tags(models)
     all_categories = collect_all_categories(models)
@@ -369,6 +380,7 @@ def build_gallery(config, models, profile):
         all_categories=all_categories,
         title=config["title"],
         git_source_url=git_source_url,
+        custom_css=custom_css_name,
     )
     index_path = os.path.join(output_dir, "index.html")
     with open(index_path, "w") as f:
@@ -388,6 +400,7 @@ def build_gallery(config, models, profile):
             title=config["title"],
             git_tag=git_tag,
             git_source_url=git_source_url,
+            custom_css=custom_css_name,
         )
         detail_path = os.path.join(output_dir, "view", f"{model['name']}.html")
         with open(detail_path, "w") as f:
@@ -400,6 +413,7 @@ def build_gallery(config, models, profile):
             profile=profile,
             title=config["title"],
             git_source_url=git_source_url,
+            custom_css=custom_css_name,
         )
         about_path = os.path.join(output_dir, "about.html")
         with open(about_path, "w") as f:

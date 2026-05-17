@@ -28,6 +28,11 @@
       "type": "string",
       "description": "Directory for exported STL/STEP files",
       "default": "exports"
+    },
+    "custom_css": {
+      "type": "string",
+      "description": "Path to a custom CSS file that is loaded after the default styles. Use this to override colors, fonts, spacing, or any other styling without modifying the base templates.",
+      "examples": ["custom.css", "assets/my-theme.css"]
     }
   },
   "additionalProperties": false

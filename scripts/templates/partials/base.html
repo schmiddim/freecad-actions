@@ -12,6 +12,9 @@
 
   {# Styles #}
   <link rel="stylesheet" href="{{ base_path }}styles.css">
+  {% if custom_css %}
+  <link rel="stylesheet" href="{{ base_path }}{{ custom_css }}">
+  {% endif %}
 
   {% block head_extra %}{% endblock %}
 
