@@ -1,150 +1,94 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="dark">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ title }}</title>
+{% extends 'partials/base.html' %}
 
-  <!-- RSS/Atom Feed Discovery -->
-  <link rel="alternate" type="application/rss+xml" title="RSS Feed" href="rss.xml">
-  <link rel="alternate" type="application/atom+xml" title="Atom Feed" href="atom.xml">
+{% set base_path = '' %}
+{% set active_page = 'gallery' %}
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="styles.css">
-  <script>
-    // Apply saved or system theme before render to avoid flash
-    (function() {
-      const saved = localStorage.getItem('theme');
-      const preferred = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-      document.documentElement.setAttribute('data-theme', preferred);
-    })();
-  </script>
-</head>
-<body>
-  <header>
-    <h1>{{ title }}</h1>
-    <nav>
-      {% if profile %}
-      <a href="about.html">About</a>
+{% block nav_links %}
+<a href="index.html" class="nav-link active">Gallery</a>
+{% endblock %}
+
+{% block content %}
+{% if all_categories %}
+<div class="flex gap-3 flex-wrap max-w-7xl mx-auto px-6 pt-6 pb-2">
+  <button class="category-btn active" data-category="all">All Categories</button>
+  {% for category in all_categories %}
+  <button class="category-btn" data-category="{{ category }}">{{ category }}</button>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if all_tags %}
+<div class="flex gap-2 flex-wrap max-w-7xl mx-auto px-6 pb-4">
+  <button class="tag-btn active" data-tag="all">All Tags</button>
+  {% for tag in all_tags %}
+  <button class="tag-btn" data-tag="{{ tag }}">{{ tag }}</button>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-6 p-6 max-w-7xl mx-auto" id="grid">
+  {% for model in models %}
+  <a class="card" href="view/{{ model.name }}.html" data-tags="{{ model.tags | join(',') }}" data-categories="{{ model.categories | join(',') }}">
+    <div class="thumbnail">
+      {% if model.primaryImage %}
+      <img src="{{ model.primaryImage }}" alt="{{ model.title }}" loading="lazy">
+      {% else %}
+      <span class="loading">No preview</span>
       {% endif %}
-      {% if git_source_url %}
-      <a href="{{ git_source_url }}" target="_blank" rel="noopener" title="GitHub Repository">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/>
-        </svg>
-        GitHub
-      </a>
+    </div>
+    <div class="card-info">
+      <h3>{{ model.title }}</h3>
+      {% if model.description %}
+      <p>{{ model.description | truncate(100) }}</p>
       {% endif %}
-      <a href="rss.xml" title="Subscribe via RSS">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/>
-        </svg>
-        Subscribe
-      </a>
-      <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark mode" aria-label="Toggle theme">🌙</button>
-    </nav>
-  </header>
+    </div>
+    {% if model.tags %}
+    <div class="card-tags">
+      {% for tag in model.tags %}
+      <span class="card-tag">{{ tag }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </a>
+  {% endfor %}
+</div>
+{% endblock %}
 
-  {% if all_categories %}
-  <div class="categories-filter">
-    <button class="category-btn active" data-category="all">All Categories</button>
-    {% for category in all_categories %}
-    <button class="category-btn" data-category="{{ category }}">{{ category }}</button>
-    {% endfor %}
-  </div>
-  {% endif %}
-
-  {% if all_tags %}
-  <div class="tags-filter">
-    <button class="tag-btn active" data-tag="all">All Tags</button>
-    {% for tag in all_tags %}
-    <button class="tag-btn" data-tag="{{ tag }}">{{ tag }}</button>
-    {% endfor %}
-  </div>
-  {% endif %}
-
-  <div class="grid" id="grid">
-    {% for model in models %}
-    <a class="card" href="view/{{ model.name }}.html" data-tags="{{ model.tags | join(',') }}" data-categories="{{ model.categories | join(',') }}">
-      <div class="thumbnail">
-        {% if model.primaryImage %}
-        <img src="{{ model.primaryImage }}" alt="{{ model.title }}" loading="lazy">
-        {% else %}
-        <span class="loading">No preview</span>
-        {% endif %}
-      </div>
-      <div class="card-info">
-        <h3>{{ model.title }}</h3>
-        {% if model.description %}
-        <p>{{ model.description | truncate(100) }}</p>
-        {% endif %}
-      </div>
-      {% if model.tags %}
-      <div class="card-tags">
-        {% for tag in model.tags %}
-        <span class="card-tag">{{ tag }}</span>
-        {% endfor %}
-      </div>
-      {% endif %}
-    </a>
-    {% endfor %}
-  </div>
-
-<script>
-// Theme toggle
-const toggle = document.getElementById('theme-toggle');
-function applyTheme(theme) {
-  document.documentElement.setAttribute('data-theme', theme);
-  toggle.textContent = theme === 'dark' ? '🌙' : '☀️';
-  localStorage.setItem('theme', theme);
-}
-applyTheme(document.documentElement.getAttribute('data-theme'));
-toggle.addEventListener('click', () => {
-  applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
-});
-</script>
-
+{% block scripts %}
 <script>
 // Filtering logic
-const cards = document.querySelectorAll('.card');
-let activeCategory = 'all';
-let activeTag = 'all';
+var cards = document.querySelectorAll('.card');
+var activeCategory = 'all';
+var activeTag = 'all';
 
 function applyFilters() {
-  cards.forEach(card => {
-    const cardCategories = (card.dataset.categories || '').split(',').filter(c => c);
-    const cardTags = (card.dataset.tags || '').split(',').filter(t => t);
-    
-    const categoryMatch = activeCategory === 'all' || cardCategories.includes(activeCategory);
-    const tagMatch = activeTag === 'all' || cardTags.includes(activeTag);
-    
+  cards.forEach(function(card) {
+    var cardCategories = (card.dataset.categories || '').split(',').filter(function(c) { return c; });
+    var cardTags = (card.dataset.tags || '').split(',').filter(function(t) { return t; });
+
+    var categoryMatch = activeCategory === 'all' || cardCategories.includes(activeCategory);
+    var tagMatch = activeTag === 'all' || cardTags.includes(activeTag);
+
     card.classList.toggle('hidden', !(categoryMatch && tagMatch));
   });
 }
 
-// Category filtering
-document.querySelectorAll('.category-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+document.querySelectorAll('.category-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.category-btn').forEach(function(b) { b.classList.remove('active'); });
     btn.classList.add('active');
     activeCategory = btn.dataset.category;
     applyFilters();
   });
 });
 
-// Tag filtering
-document.querySelectorAll('.tag-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
+document.querySelectorAll('.tag-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tag-btn').forEach(function(b) { b.classList.remove('active'); });
     btn.classList.add('active');
     activeTag = btn.dataset.tag;
     applyFilters();
   });
 });
 </script>
-
-<footer>
-  Made with ❤️ by <a href="https://github.com/schmiddim/freecad-action" target="_blank" rel="noopener">freecad-action</a>
-</footer>
-</body>
-</html>
+{% endblock %}

@@ -9,6 +9,9 @@
 __pycache__/
 *.pyc
 
+# Node.js
+node_modules/
+
 # Generated directories
 gallery/
 exports/

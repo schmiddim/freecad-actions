@@ -1,0 +1,349 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Base Layer ─────────────────────────────────────────────────── */
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* ─── Component Layer ────────────────────────────────────────────── */
+@layer components {
+
+  /* Navigation links */
+  .nav-link {
+    @apply text-gray-500 dark:text-gray-400 no-underline text-sm transition-colors duration-200 flex items-center gap-1.5;
+  }
+  .nav-link:hover,
+  .nav-link.active {
+    @apply text-gray-900 dark:text-gray-100;
+  }
+
+  /* Theme toggle button */
+  .theme-toggle {
+    @apply bg-transparent border border-gray-300 dark:border-gray-600 rounded-md text-gray-500 dark:text-gray-400
+           cursor-pointer px-2 py-1 flex items-center transition-colors duration-200 text-base leading-none;
+  }
+  .theme-toggle:hover {
+    @apply text-gray-900 dark:text-gray-100 border-gray-400 dark:border-gray-500;
+  }
+
+  /* Buttons */
+  .btn {
+    @apply bg-gray-700 dark:bg-blue-900/60 text-white border-none py-3 px-6 rounded-lg cursor-pointer
+           text-sm no-underline transition-opacity duration-200 inline-block;
+  }
+  .btn:hover {
+    @apply opacity-85;
+  }
+  .btn-primary {
+    @apply bg-accent;
+  }
+  .btn-primary:hover {
+    @apply bg-accent-hover;
+  }
+
+  /* ─── Gallery: Filter Buttons ──────────────────────────────────── */
+  .category-btn {
+    @apply bg-surface-light dark:bg-surface-dark text-gray-900 dark:text-gray-100
+           border-2 border-gray-200 dark:border-gray-700
+           py-2 px-5 rounded-full cursor-pointer text-sm font-medium transition-all duration-200;
+  }
+  .category-btn:hover,
+  .category-btn.active {
+    @apply bg-accent text-white border-accent -translate-y-0.5;
+  }
+
+  .tag-btn {
+    @apply bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400
+           border border-gray-200 dark:border-gray-700
+           py-1 px-3 rounded-full cursor-pointer text-xs transition-all duration-200;
+  }
+  .tag-btn:hover,
+  .tag-btn.active {
+    @apply bg-accent text-white border-accent;
+  }
+
+  /* ─── Gallery: Cards ───────────────────────────────────────────── */
+  .card {
+    @apply bg-surface-light dark:bg-surface-dark rounded-xl overflow-hidden cursor-pointer
+           transition-all duration-200 border border-gray-200 dark:border-gray-700
+           no-underline text-inherit block;
+  }
+  .card:hover {
+    @apply -translate-y-1 shadow-xl;
+  }
+  .card.hidden {
+    display: none !important;
+  }
+
+  .card-info {
+    @apply p-4 border-t border-gray-200 dark:border-gray-700;
+  }
+  .card-info h3 {
+    @apply text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis;
+  }
+  .card-info p {
+    @apply text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2;
+  }
+
+  .card-tags {
+    @apply flex gap-1 flex-wrap px-4 pb-3;
+  }
+  .card-tag {
+    @apply text-[0.65rem] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 py-0.5 px-2 rounded-full;
+  }
+
+  /* ─── Detail: Viewer & Content ─────────────────────────────────── */
+  .viewer-wrapper {
+    @apply bg-surface-light dark:bg-surface-dark rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700;
+  }
+
+  .viewer {
+    @apply w-full bg-viewer-light dark:bg-viewer-dark;
+    height: 70vh;
+    min-height: 400px;
+  }
+  .viewer canvas {
+    @apply w-full h-full;
+  }
+
+  .info {
+    @apply p-6 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center flex-wrap gap-4;
+  }
+  .info h2 {
+    @apply text-xl font-semibold;
+  }
+  .info-actions {
+    @apply flex gap-3 items-center flex-wrap;
+  }
+
+  .description {
+    @apply p-6 border-t border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 leading-relaxed text-[0.95rem];
+  }
+
+  .tags {
+    @apply flex gap-1.5 flex-wrap px-6 pb-4;
+  }
+  .tag {
+    @apply text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 py-0.5 px-2.5 rounded-xl;
+  }
+
+  .external-links-wrapper {
+    @apply px-6 pb-6;
+  }
+  .external-links-label {
+    @apply text-sm text-gray-500 dark:text-gray-400 mb-2 font-medium;
+  }
+  .external-links {
+    @apply flex gap-2 flex-wrap;
+  }
+  .external-links a {
+    @apply text-gray-500 dark:text-gray-400 no-underline text-xs py-1 px-2.5
+           border border-gray-200 dark:border-gray-700 rounded transition-all duration-200;
+  }
+  .external-links a:hover {
+    @apply text-gray-900 dark:text-gray-100 border-accent;
+  }
+
+  .license {
+    @apply px-6 pb-4 text-xs text-gray-500 dark:text-gray-400 opacity-70;
+  }
+
+  /* ─── Detail: Combined Gallery (3D + Photos) ───────────────────── */
+  .combined-gallery {
+    @apply p-6 border-t border-gray-200 dark:border-gray-700;
+  }
+  .gallery-main {
+    @apply relative mb-4;
+  }
+
+  .hero-image {
+    @apply w-full rounded-xl border border-gray-200 dark:border-gray-700 object-contain
+           bg-viewer-light dark:bg-viewer-dark cursor-pointer hidden;
+    max-height: 500px;
+  }
+  .hero-image.active {
+    @apply block;
+  }
+
+  .viewer.in-gallery {
+    @apply rounded-xl border border-gray-200 dark:border-gray-700 hidden;
+    height: 500px;
+  }
+  .viewer.in-gallery.active {
+    @apply block;
+  }
+
+  .gallery-thumbs {
+    @apply grid gap-4;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+  .gallery-thumb-wrapper {
+    @apply cursor-pointer;
+  }
+  .gallery-thumb {
+    @apply relative rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-700
+           transition-all duration-200 bg-viewer-light dark:bg-viewer-dark mb-1.5;
+    height: 100px;
+  }
+  .gallery-thumb-wrapper:hover .gallery-thumb {
+    @apply scale-105 border-accent shadow-lg;
+  }
+  .gallery-thumb.active {
+    @apply border-accent ring-2 ring-accent;
+  }
+  .gallery-thumb img {
+    @apply w-full h-full object-cover;
+  }
+  .gallery-thumb.is-3d {
+    @apply flex items-center justify-center flex-col gap-1;
+  }
+  .gallery-thumb.is-3d::before {
+    content: '3D';
+    @apply text-3xl text-accent font-bold;
+  }
+  .gallery-thumb.is-3d::after {
+    content: 'Model';
+    @apply text-[0.65rem] text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider;
+  }
+  .gallery-thumb-caption {
+    @apply text-[0.7rem] text-gray-500 dark:text-gray-400 text-center overflow-hidden text-ellipsis whitespace-nowrap;
+  }
+
+  /* ─── Lightbox ─────────────────────────────────────────────────── */
+  .lightbox {
+    @apply hidden fixed inset-0 bg-black/90 z-[9999] justify-center items-center cursor-pointer;
+  }
+  .lightbox.active {
+    @apply flex;
+  }
+  .lightbox img {
+    @apply max-w-[90%] max-h-[90%] object-contain rounded-lg;
+  }
+  .lightbox-close {
+    @apply absolute top-5 right-8 text-[40px] text-white cursor-pointer select-none font-light;
+  }
+  .lightbox-nav {
+    @apply absolute top-1/2 -translate-y-1/2 text-[50px] text-white cursor-pointer select-none
+           p-5 bg-black/50 rounded-full w-[60px] h-[60px] flex items-center justify-center transition-colors duration-200;
+  }
+  .lightbox-nav:hover {
+    @apply bg-black/80;
+  }
+  .lightbox-nav.prev {
+    @apply left-8;
+  }
+  .lightbox-nav.next {
+    @apply right-8;
+  }
+
+  /* ─── Detail: Metadata Box ─────────────────────────────────────── */
+  .metadata-box {
+    @apply bg-orange-500 text-white rounded-xl mb-6 overflow-hidden shadow-lg shadow-orange-500/30;
+  }
+  .metadata-box-header {
+    @apply py-4 px-6 cursor-pointer flex justify-between items-center select-none transition-colors duration-200;
+  }
+  .metadata-box-header:hover {
+    @apply bg-orange-400;
+  }
+  .metadata-box-title {
+    @apply flex items-center gap-2 font-semibold text-[0.95rem];
+  }
+  .metadata-box-icon {
+    @apply text-xs transition-transform duration-300;
+  }
+  .metadata-box-icon.expanded {
+    @apply rotate-90;
+  }
+  .metadata-box-content {
+    @apply max-h-0 overflow-hidden transition-all duration-300 ease-out bg-black/10;
+  }
+  .metadata-box-content.expanded {
+    max-height: 1000px;
+  }
+  .metadata-box-inner {
+    @apply p-6 leading-relaxed;
+  }
+  .metadata-box-inner h3 {
+    @apply mb-3 text-base font-semibold;
+  }
+  .metadata-box-inner p {
+    @apply mb-4 opacity-95;
+  }
+  .metadata-box-inner code {
+    @apply bg-black/20 py-0.5 px-1.5 rounded text-sm font-mono;
+  }
+
+  /* YAML template code block */
+  .yaml-template {
+    @apply bg-gray-800 text-gray-100 p-4 rounded-lg font-mono text-sm relative overflow-x-auto my-4 leading-snug;
+    white-space: pre;
+  }
+  .yaml-comment { @apply text-gray-500; }
+  .yaml-key { @apply text-cyan-400; }
+  .yaml-string { @apply text-yellow-300; }
+
+  .copy-btn {
+    @apply absolute top-2 right-2 bg-gray-600 text-white border-none py-1.5 px-3 rounded-md cursor-pointer text-xs font-semibold transition-colors duration-200;
+  }
+  .copy-btn:hover { @apply bg-gray-500; }
+  .copy-btn.copied { @apply bg-green-600; }
+
+  .github-link {
+    @apply inline-flex items-center gap-1.5 bg-black/20 text-white no-underline py-2.5 px-4
+           rounded-lg text-sm font-semibold transition-colors duration-200 mt-2;
+  }
+  .github-link:hover {
+    @apply bg-black/30;
+  }
+
+  /* ─── Detail: Navigation ───────────────────────────────────────── */
+  .nav {
+    @apply flex justify-between items-center mt-6 gap-4;
+  }
+  .nav .btn {
+    @apply min-w-[120px] text-center;
+  }
+
+  /* ─── About Page ───────────────────────────────────────────────── */
+  .avatar {
+    @apply w-20 h-20 rounded-full border-2 border-gray-200 dark:border-gray-700 mb-6 object-cover;
+  }
+  .bio {
+    @apply text-gray-500 dark:text-gray-400 leading-relaxed text-[0.95rem] mb-8;
+  }
+  .links {
+    @apply flex flex-wrap gap-3;
+  }
+  .links a {
+    @apply text-gray-500 dark:text-gray-400 no-underline text-sm py-1.5 px-4
+           border border-gray-200 dark:border-gray-700 rounded-md transition-all duration-200;
+  }
+  .links a:hover {
+    @apply text-gray-900 dark:text-gray-100 border-accent;
+  }
+
+  /* ─── Utility: Loading Indicator ───────────────────────────────── */
+  .loading {
+    @apply flex items-center justify-center text-gray-500 dark:text-gray-400;
+    height: 70vh;
+  }
+
+  /* ─── Thumbnail in gallery grid ────────────────────────────────── */
+  .thumbnail {
+    @apply w-full bg-viewer-light dark:bg-viewer-dark flex items-center justify-center overflow-hidden;
+    height: 200px;
+  }
+  .thumbnail img {
+    @apply w-full h-full object-contain;
+  }
+  .thumbnail .loading {
+    @apply text-xs h-full;
+  }
+}

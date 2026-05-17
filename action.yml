@@ -24,6 +24,26 @@ outputs:
 runs:
   using: 'composite'
   steps:
+    # --- Setup Node.js for Tailwind CSS compilation ---
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Cache npm dependencies
+      uses: actions/cache@v5
+      with:
+        path: ${{ github.action_path }}/scripts/node_modules
+        key: npm-${{ runner.os }}-${{ hashFiles(format('{0}/scripts/package-lock.json', github.action_path)) }}
+        restore-keys: |
+          npm-${{ runner.os }}-
+
+    - name: Install Tailwind CSS dependencies
+      shell: bash
+      run: |
+        SCRIPTS_DIR="${{ github.action_path }}/scripts"
+        [ -f "${SCRIPTS_DIR}/package.json" ] && cd "${SCRIPTS_DIR}" && npm install --no-audit --no-fund
+
     # --- Export via Docker (same as: make build) ---
     - name: Export + Build Gallery (Docker)
       if: inputs.use-docker == 'true'

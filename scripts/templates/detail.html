@@ -1,74 +1,42 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="dark">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ model.title }} - {{ title }}</title>
+{% extends 'partials/base.html' %}
 
-  <!-- RSS/Atom Feed Discovery -->
-  <link rel="alternate" type="application/rss+xml" title="RSS Feed" href="../rss.xml">
-  <link rel="alternate" type="application/atom+xml" title="Atom Feed" href="../atom.xml">
+{% set base_path = '../' %}
+{% set active_page = 'detail' %}
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="../styles.css">
+{% block title %}{{ model.title }} - {{ title }}{% endblock %}
 
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
-      }
+{% block head_extra %}
+<script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
     }
-  </script>
-  <script>
-    (function() {
-      const saved = localStorage.getItem('theme');
-      const preferred = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-      document.documentElement.setAttribute('data-theme', preferred);
-    })();
-  </script>
-</head>
-<body>
-  <header>
-    <h1><a href="../index.html" style="color: inherit; text-decoration: none;">{{ title }}</a></h1>
-    <nav>
-      <a href="../index.html">Gallery</a>
-      {% if profile %}
-      <a href="../about.html">About</a>
-      {% endif %}
-      {% if git_source_url %}
-      <a href="{{ git_source_url }}" target="_blank" rel="noopener" title="GitHub Repository">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/>
-        </svg>
-        GitHub
-      </a>
-      {% endif %}
-      <a href="../rss.xml" title="Subscribe via RSS">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/>
-        </svg>
-        Subscribe
-      </a>
-      <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark mode" aria-label="Toggle theme">🌙</button>
-    </nav>
-  </header>
+  }
+</script>
+{% endblock %}
 
-  <div class="container">
-    {% if not model.has_metadata %}
-    <div class="metadata-box">
-      <div class="metadata-box-header" onclick="toggleMetadataBox()">
-        <div class="metadata-box-title">
-          <span class="metadata-box-icon" id="metadata-icon">▶</span>
-          <span>📝 No metadata file found - Click to learn how to add one</span>
-        </div>
+{% block nav_links %}
+<a href="../index.html" class="nav-link">Gallery</a>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto p-6">
+
+  {% if not model.has_metadata %}
+  <div class="metadata-box">
+    <div class="metadata-box-header" onclick="toggleMetadataBox()">
+      <div class="metadata-box-title">
+        <span class="metadata-box-icon" id="metadata-icon">&#9654;</span>
+        <span>No metadata file found - Click to learn how to add one</span>
       </div>
-      <div class="metadata-box-content" id="metadata-content">
-        <div class="metadata-box-inner">
-          <h3>How to add metadata for this model</h3>
-          <p>Create a file named <code>metadata/{{ model.name }}.yaml</code> in your repository with the following content:</p>
-          
-          <div class="yaml-template"><button class="copy-btn" onclick="copyYamlTemplate(event)">Copy</button><span class="yaml-comment"># yaml-language-server: $schema=https://raw.githubusercontent.com/schmiddim/freecad-action/refs/tags/{{ git_tag }}/schemas/meta.schema.json
+    </div>
+    <div class="metadata-box-content" id="metadata-content">
+      <div class="metadata-box-inner">
+        <h3>How to add metadata for this model</h3>
+        <p>Create a file named <code>metadata/{{ model.name }}.yaml</code> in your repository with the following content:</p>
+
+        <div class="yaml-template"><button class="copy-btn" onclick="copyYamlTemplate(event)">Copy</button><span class="yaml-comment"># yaml-language-server: $schema=https://raw.githubusercontent.com/schmiddim/freecad-action/refs/tags/{{ git_tag }}/schemas/meta.schema.json
 </span><span class="yaml-key">title</span>: <span class="yaml-string">"{{ model.title }}"</span>
 <span class="yaml-key">description</span>: <span class="yaml-string">"Add your description here"</span>
 <span class="yaml-key">tags</span>:
@@ -89,172 +57,159 @@
 <span class="yaml-comment">#   - filename: "photo1.jpg"</span>
 <span class="yaml-comment">#     caption: "Optional caption"</span></div>
 
-          {% if git_source_url %}
-          <p><strong>Quick option:</strong> Create the file directly on GitHub:</p>
-          <a href="{{ git_source_url }}/new/master?filename=metadata/{{ model.name }}.yaml" target="_blank" rel="noopener" class="github-link">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/>
-            </svg>
-            Create {{ model.name }}.yaml on GitHub
-          </a>
-          <p style="font-size: 0.8rem; margin-top: 0.5rem; opacity: 0.9;">After clicking the link, paste the YAML template above into the GitHub editor and commit the file.</p>
-          {% endif %}
-        </div>
+        {% if git_source_url %}
+        <p><strong>Quick option:</strong> Create the file directly on GitHub:</p>
+        <a href="{{ git_source_url }}/new/master?filename=metadata/{{ model.name }}.yaml" target="_blank" rel="noopener" class="github-link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/>
+          </svg>
+          Create {{ model.name }}.yaml on GitHub
+        </a>
+        <p class="text-xs mt-2 opacity-90">After clicking the link, paste the YAML template above into the GitHub editor and commit the file.</p>
+        {% endif %}
       </div>
     </div>
-    {% endif %}
-
-    <div class="viewer-wrapper">
-      <div class="info">
-        <h2>{{ model.title }}</h2>
-        <div class="info-actions">
-          <a href="../{{ model.stl }}" download class="btn btn-primary">Download STL</a>
-          {% if model.fcstd %}
-          <a href="../{{ model.fcstd }}" download class="btn">Download FCStd</a>
-          {% endif %}
-        </div>
-      </div>
-      {% if model.description %}
-      <div class="description">{{ model.description }}</div>
-      {% endif %}
-      {% if model.tags %}
-      <div class="tags">
-        {% for tag in model.tags %}
-        <span class="tag">{{ tag }}</span>
-        {% endfor %}
-      </div>
-      {% endif %}
-      {% if model.links %}
-      <div class="external-links-wrapper">
-        <div class="external-links-label">Links</div>
-        <div class="external-links">
-          {% for platform, url in model.links.items() %}
-          <a href="{{ url }}" target="_blank" rel="noopener">{{ platform }}</a>
-          {% endfor %}
-        </div>
-      </div>
-      {% endif %}
-      {% if model.license %}
-      <div class="license">License: {{ model.license }}</div>
-      {% endif %}
-      
-      <!-- Combined Gallery: 3D Model + Photos -->
-      <div class="combined-gallery">
-        <div class="gallery-main">
-          <!-- 3D Viewer (shown by default) -->
-          <div class="viewer in-gallery active" id="viewer">
-            <div class="loading">Loading 3D model...</div>
-          </div>
-          
-          <!-- Photo images (hidden by default) -->
-          {% if model.images %}
-          {% for img in model.images %}
-          <img class="hero-image" src="../images/{{ model.name }}/{{ img.filename }}" alt="{{ img.caption or model.title }}" data-index="{{ loop.index0 }}" onclick="openLightbox({{ loop.index0 }})">
-          {% endfor %}
-          {% endif %}
-        </div>
-        
-        <!-- Thumbnails: 3D + Photos -->
-        <div class="gallery-thumbs">
-          <!-- 3D Thumbnail -->
-          <div class="gallery-thumb-wrapper" onclick="showGalleryItem('3d')">
-            <div class="gallery-thumb is-3d active"></div>
-          </div>
-          
-          <!-- Photo Thumbnails -->
-          {% if model.images %}
-          {% for img in model.images %}
-          <div class="gallery-thumb-wrapper" onclick="showGalleryItem({{ loop.index0 }})">
-            <div class="gallery-thumb">
-              <img src="../images/{{ model.name }}/{{ img.filename }}" alt="{{ img.caption or model.title }}">
-            </div>
-            {% if img.caption %}
-            <div class="gallery-thumb-caption">{{ img.caption }}</div>
-            {% endif %}
-          </div>
-          {% endfor %}
-          {% endif %}
-        </div>
-      </div>
-    </div>
-
-    <div class="nav">
-      {% if prev_model %}
-      <a href="{{ prev_model.name }}.html" class="btn">Previous</a>
-      {% else %}
-      <span></span>
-      {% endif %}
-      <a href="../index.html" class="btn">Back to Gallery</a>
-      {% if next_model %}
-      <a href="{{ next_model.name }}.html" class="btn">Next</a>
-      {% else %}
-      <span></span>
-      {% endif %}
-    </div>
-  </div>
-
-  {% if model.images %}
-  <div id="lightbox" class="lightbox" onclick="closeLightbox()">
-    <span class="lightbox-close">&times;</span>
-    <span class="lightbox-nav prev" onclick="event.stopPropagation(); navigateLightbox(-1)">&#10094;</span>
-    <img id="lightbox-img" src="" alt="">
-    <span class="lightbox-nav next" onclick="event.stopPropagation(); navigateLightbox(1)">&#10095;</span>
   </div>
   {% endif %}
 
-<script>
-const toggle = document.getElementById('theme-toggle');
-function applyTheme(theme) {
-  document.documentElement.setAttribute('data-theme', theme);
-  toggle.textContent = theme === 'dark' ? '🌙' : '☀️';
-  localStorage.setItem('theme', theme);
-}
-applyTheme(document.documentElement.getAttribute('data-theme'));
-toggle.addEventListener('click', () => {
-  applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
-});
-</script>
+  <div class="viewer-wrapper">
+    <div class="info">
+      <h2>{{ model.title }}</h2>
+      <div class="info-actions">
+        <a href="../{{ model.stl }}" download class="btn btn-primary">Download STL</a>
+        {% if model.fcstd %}
+        <a href="../{{ model.fcstd }}" download class="btn">Download FCStd</a>
+        {% endif %}
+      </div>
+    </div>
+    {% if model.description %}
+    <div class="description">{{ model.description }}</div>
+    {% endif %}
+    {% if model.tags %}
+    <div class="tags">
+      {% for tag in model.tags %}
+      <span class="tag">{{ tag }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if model.links %}
+    <div class="external-links-wrapper">
+      <div class="external-links-label">Links</div>
+      <div class="external-links">
+        {% for platform, url in model.links.items() %}
+        <a href="{{ url }}" target="_blank" rel="noopener">{{ platform }}</a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    {% if model.license %}
+    <div class="license">License: {{ model.license }}</div>
+    {% endif %}
 
+    {# Combined Gallery: 3D Model + Photos #}
+    <div class="combined-gallery">
+      <div class="gallery-main">
+        {# 3D Viewer (shown by default) #}
+        <div class="viewer in-gallery active" id="viewer">
+          <div class="loading">Loading 3D model...</div>
+        </div>
+
+        {# Photo images (hidden by default) #}
+        {% if model.images %}
+        {% for img in model.images %}
+        <img class="hero-image" src="../images/{{ model.name }}/{{ img.filename }}" alt="{{ img.caption or model.title }}" data-index="{{ loop.index0 }}" onclick="openLightbox({{ loop.index0 }})">
+        {% endfor %}
+        {% endif %}
+      </div>
+
+      {# Thumbnails: 3D + Photos #}
+      <div class="gallery-thumbs">
+        <div class="gallery-thumb-wrapper" onclick="showGalleryItem('3d')">
+          <div class="gallery-thumb is-3d active"></div>
+        </div>
+        {% if model.images %}
+        {% for img in model.images %}
+        <div class="gallery-thumb-wrapper" onclick="showGalleryItem({{ loop.index0 }})">
+          <div class="gallery-thumb">
+            <img src="../images/{{ model.name }}/{{ img.filename }}" alt="{{ img.caption or model.title }}">
+          </div>
+          {% if img.caption %}
+          <div class="gallery-thumb-caption">{{ img.caption }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="nav">
+    {% if prev_model %}
+    <a href="{{ prev_model.name }}.html" class="btn">Previous</a>
+    {% else %}
+    <span></span>
+    {% endif %}
+    <a href="../index.html" class="btn">Back to Gallery</a>
+    {% if next_model %}
+    <a href="{{ next_model.name }}.html" class="btn">Next</a>
+    {% else %}
+    <span></span>
+    {% endif %}
+  </div>
+</div>
+
+{% if model.images %}
+<div id="lightbox" class="lightbox" onclick="closeLightbox()">
+  <span class="lightbox-close">&times;</span>
+  <span class="lightbox-nav prev" onclick="event.stopPropagation(); navigateLightbox(-1)">&#10094;</span>
+  <img id="lightbox-img" src="" alt="">
+  <span class="lightbox-nav next" onclick="event.stopPropagation(); navigateLightbox(1)">&#10095;</span>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{# 3D Viewer #}
 <script type="module">
 import * as THREE from 'three';
 import { STLLoader } from 'three/addons/loaders/STLLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-const container = document.getElementById('viewer');
-const width = container.clientWidth;
-const height = container.clientHeight;
+var container = document.getElementById('viewer');
+var width = container.clientWidth;
+var height = container.clientHeight;
 
-const scene = new THREE.Scene();
-const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+var scene = new THREE.Scene();
+var isLight = !document.documentElement.classList.contains('dark');
 scene.background = new THREE.Color(isLight ? 0xe8eaf0 : 0x0f0f23);
 
-const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 10000);
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+var camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 10000);
+var renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(width, height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 container.innerHTML = '';
 container.appendChild(renderer.domElement);
 
-const controls = new OrbitControls(camera, renderer.domElement);
+var controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
 
 scene.add(new THREE.AmbientLight(0x404040, 3));
-const d1 = new THREE.DirectionalLight(0xffffff, 1);
+var d1 = new THREE.DirectionalLight(0xffffff, 1);
 d1.position.set(1, 1, 1);
 scene.add(d1);
-const d2 = new THREE.DirectionalLight(0xffffff, 0.5);
+var d2 = new THREE.DirectionalLight(0xffffff, 0.5);
 d2.position.set(-1, -1, -1);
 scene.add(d2);
 
-const loader = new STLLoader();
-loader.load('../{{ model.stl }}', geometry => {
-  const material = new THREE.MeshStandardMaterial({ color: 0xe94560, metalness: 0.3, roughness: 0.6 });
-  const mesh = new THREE.Mesh(geometry, material);
+var loader = new STLLoader();
+loader.load('../{{ model.stl }}', function(geometry) {
+  var material = new THREE.MeshStandardMaterial({ color: 0xe94560, metalness: 0.3, roughness: 0.6 });
+  var mesh = new THREE.Mesh(geometry, material);
   geometry.computeBoundingBox();
-  const center = geometry.boundingBox.getCenter(new THREE.Vector3());
-  const size = geometry.boundingBox.getSize(new THREE.Vector3());
+  var center = geometry.boundingBox.getCenter(new THREE.Vector3());
+  var size = geometry.boundingBox.getSize(new THREE.Vector3());
   mesh.position.sub(center);
   scene.add(mesh);
   camera.position.set(0, 0, Math.max(size.x, size.y, size.z) * 2.5);
@@ -268,98 +223,87 @@ function animate() {
 }
 animate();
 
-window.addEventListener('resize', () => {
-  const w = container.clientWidth;
-  const h = container.clientHeight;
+window.addEventListener('resize', function() {
+  var w = container.clientWidth;
+  var h = container.clientHeight;
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
   renderer.setSize(w, h);
 });
 </script>
 
+{# Metadata box + Gallery + Lightbox logic #}
 <script>
 // Metadata box toggle
 function toggleMetadataBox() {
-  const content = document.getElementById('metadata-content');
-  const icon = document.getElementById('metadata-icon');
-  
+  var content = document.getElementById('metadata-content');
+  var icon = document.getElementById('metadata-icon');
+
   if (content.classList.contains('expanded')) {
     content.classList.remove('expanded');
     icon.classList.remove('expanded');
-    icon.textContent = '▶';
+    icon.textContent = '\u25B6';
   } else {
     content.classList.add('expanded');
     icon.classList.add('expanded');
-    icon.textContent = '▼';
+    icon.textContent = '\u25BC';
   }
 }
 
 // Copy YAML template to clipboard
 function copyYamlTemplate(event) {
   event.stopPropagation();
-  const btn = event.target;
-  const yamlTemplate = btn.parentElement;
-  
-  // Extract plain text without HTML tags
-  const tempDiv = document.createElement('div');
+  var btn = event.target;
+  var yamlTemplate = btn.parentElement;
+
+  var tempDiv = document.createElement('div');
   tempDiv.innerHTML = yamlTemplate.innerHTML;
-  
-  // Remove the copy button from the cloned content
-  const copyBtnClone = tempDiv.querySelector('.copy-btn');
-  if (copyBtnClone) {
-    copyBtnClone.remove();
-  }
-  
-  const text = tempDiv.textContent || tempDiv.innerText;
-  
-  // Copy to clipboard
-  navigator.clipboard.writeText(text).then(() => {
-    const originalText = btn.textContent;
-    btn.textContent = '✓ Copied!';
+  var copyBtnClone = tempDiv.querySelector('.copy-btn');
+  if (copyBtnClone) copyBtnClone.remove();
+  var text = tempDiv.textContent || tempDiv.innerText;
+
+  navigator.clipboard.writeText(text).then(function() {
+    var originalText = btn.textContent;
+    btn.textContent = 'Copied!';
     btn.classList.add('copied');
-    
-    setTimeout(() => {
+    setTimeout(function() {
       btn.textContent = originalText;
       btn.classList.remove('copied');
     }, 2000);
-  }).catch(err => {
+  }).catch(function(err) {
     console.error('Failed to copy:', err);
-    btn.textContent = '✗ Failed';
-    setTimeout(() => {
-      btn.textContent = 'Copy';
-    }, 2000);
+    btn.textContent = 'Failed';
+    setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
   });
 }
 
 // Combined gallery functionality (3D + Photos)
 {% if model.images %}
-const images = {{ model.images | tojson }};
-const modelName = "{{ model.name }}";
+var images = {{ model.images | tojson }};
+var modelName = "{{ model.name }}";
+var currentImageIndex = 0;
 {% endif %}
-let currentGalleryItem = '3d';
+var currentGalleryItem = '3d';
 
 function showGalleryItem(item) {
-  const viewer = document.getElementById('viewer');
-  const heroImages = document.querySelectorAll('.hero-image');
-  const thumbWrappers = document.querySelectorAll('.gallery-thumb-wrapper');
-  
-  // Hide all
+  var viewer = document.getElementById('viewer');
+  var heroImages = document.querySelectorAll('.hero-image');
+  var thumbWrappers = document.querySelectorAll('.gallery-thumb-wrapper');
+
   viewer.classList.remove('active');
-  heroImages.forEach(img => img.classList.remove('active'));
-  thumbWrappers.forEach(wrapper => {
+  heroImages.forEach(function(img) { img.classList.remove('active'); });
+  thumbWrappers.forEach(function(wrapper) {
     wrapper.querySelector('.gallery-thumb').classList.remove('active');
   });
-  
+
   if (item === '3d') {
-    // Show 3D viewer
     viewer.classList.add('active');
     thumbWrappers[0].querySelector('.gallery-thumb').classList.add('active');
     currentGalleryItem = '3d';
   } else {
-    // Show photo
-    const photoIndex = parseInt(item);
+    var photoIndex = parseInt(item);
     heroImages[photoIndex].classList.add('active');
-    thumbWrappers[photoIndex + 1].querySelector('.gallery-thumb').classList.add('active'); // +1 because first is 3D
+    thumbWrappers[photoIndex + 1].querySelector('.gallery-thumb').classList.add('active');
     currentGalleryItem = photoIndex;
   }
 }
@@ -371,35 +315,31 @@ function selectImage(index) {
 
 function openLightbox(index) {
   currentImageIndex = index;
-  const lightbox = document.getElementById('lightbox');
-  const lightboxImg = document.getElementById('lightbox-img');
-  
-  lightboxImg.src = `../images/${modelName}/${images[index].filename}`;
+  var lightbox = document.getElementById('lightbox');
+  var lightboxImg = document.getElementById('lightbox-img');
+
+  lightboxImg.src = '../images/' + modelName + '/' + images[index].filename;
   lightboxImg.alt = images[index].caption || "{{ model.title }}";
   lightbox.classList.add('active');
-  
   document.body.style.overflow = 'hidden';
 }
 
 function closeLightbox() {
-  const lightbox = document.getElementById('lightbox');
+  var lightbox = document.getElementById('lightbox');
   lightbox.classList.remove('active');
   document.body.style.overflow = '';
 }
 
 function navigateLightbox(direction) {
   currentImageIndex = (currentImageIndex + direction + images.length) % images.length;
-  const lightboxImg = document.getElementById('lightbox-img');
-  
-  lightboxImg.src = `../images/${modelName}/${images[currentImageIndex].filename}`;
+  var lightboxImg = document.getElementById('lightbox-img');
+  lightboxImg.src = '../images/' + modelName + '/' + images[currentImageIndex].filename;
   lightboxImg.alt = images[currentImageIndex].caption || "{{ model.title }}";
-  
   selectImage(currentImageIndex);
 }
 
-// Keyboard navigation
-document.addEventListener('keydown', (e) => {
-  const lightbox = document.getElementById('lightbox');
+document.addEventListener('keydown', function(e) {
+  var lightbox = document.getElementById('lightbox');
   if (lightbox.classList.contains('active')) {
     if (e.key === 'Escape') closeLightbox();
     if (e.key === 'ArrowLeft') navigateLightbox(-1);
@@ -408,9 +348,4 @@ document.addEventListener('keydown', (e) => {
 });
 {% endif %}
 </script>
-
-<footer>
-  Made with ❤️ by <a href="https://github.com/schmiddim/freecad-action" target="_blank" rel="noopener">freecad-action</a>
-</footer>
-</body>
-</html>
+{% endblock %}

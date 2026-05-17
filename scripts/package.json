@@ -1,0 +1,13 @@
+{
+  "name": "freecad-gallery-styles",
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss -i ./templates/input.css -o ./templates/styles.css --minify",
+    "watch:css": "tailwindcss -i ./templates/input.css -o ./templates/styles.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0",
+    "autoprefixer": "^10.4.0",
+    "postcss": "^8.4.0"
+  }
+}

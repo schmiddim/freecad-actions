@@ -48,9 +48,36 @@ step_export() {
         scripts/export.py
 }
 
+step_css() {
+    # Find the scripts directory containing package.json
+    local scripts_dir
+    if [ -f "${WORKSPACE}/scripts/package.json" ]; then
+        scripts_dir="${WORKSPACE}/scripts"
+    elif [ -f "${ACTION_PATH}/scripts/package.json" ]; then
+        scripts_dir="${ACTION_PATH}/scripts"
+    else
+        echo "==> No package.json found, skipping CSS build"
+        return 0
+    fi
+
+    echo "==> Building Tailwind CSS..."
+    if command -v npm >/dev/null 2>&1; then
+        (cd "${scripts_dir}" && npm install --no-audit --no-fund 2>&1 | tail -1 || true)
+        (cd "${scripts_dir}" && npm run build:css)
+    elif command -v npx >/dev/null 2>&1; then
+        (cd "${scripts_dir}" && npx tailwindcss -i ./templates/input.css -o ./templates/styles.css --minify)
+    else
+        echo "Warning: npm/npx not found, skipping Tailwind CSS build"
+        echo "         Install Node.js to enable Tailwind CSS compilation"
+    fi
+}
+
 step_gallery() {
     local gallery_script
     gallery_script="$(find_script scripts/build_gallery.py)"
+
+    # Build CSS before gallery
+    step_css
 
     echo "==> Installing Python dependencies..."
     "${PYTHON}" -m pip install --quiet jinja2 pyyaml 2>&1 | grep -v "syncthing-gtk" | grep -v "new release of pip" || true
