@@ -4,12 +4,9 @@ Reads configuration from cad-gallery.yaml to determine which directory
 to search for .FCStd files (non-recursive).
 
 Thumbnail Rendering (in priority order):
-1. OpenSCAD - Fastest (~0.1s/thumbnail), excellent quality, requires openscad binary
-2. PyRender - GPU-accelerated, high quality, requires pyrender package  
-3. Trimesh - Software rendering, requires pyglet
-4. Matplotlib - Works everywhere, slower (~1-2s/thumbnail), requires matplotlib
-
-Performance: OpenSCAD is ~100x faster than matplotlib rendering.
+1. OpenSCAD - Fast (~0.5s/thumbnail), good quality, requires openscad binary
+2. PyRender - GPU-accelerated, best quality with correct colors
+3. Matplotlib - Software rendering with proper shading (~1-2s/thumbnail), works everywhere
 """
 
 import FreeCAD, Mesh, Part
@@ -25,7 +22,7 @@ except ImportError:
     HAS_GUI = False
     safe_print = print  # Fallback for safe_print before it's defined
 
-# Check for OpenSCAD (fastest and best quality)
+# Check for OpenSCAD (fastest rendering)
 import shutil
 HAS_OPENSCAD = shutil.which('openscad') is not None
 
@@ -121,36 +118,31 @@ def generate_thumbnail_from_stl(stl_path, thumbnails_dir, name):
     """Generate high-quality thumbnail from STL file."""
     thumb_path = os.path.join(thumbnails_dir, f"{name}.png")
     
-    # Try OpenSCAD first (fastest and excellent quality)
+    # Try OpenSCAD first (fastest)
     if HAS_OPENSCAD:
         try:
             return _render_with_openscad(stl_path, thumb_path, name)
         except Exception as e:
             safe_print(f"  OpenSCAD rendering failed: {e}, trying fallback...")
     
-    # Fallback to Python-based rendering
+    # Fallback to Python renderers
     if not HAS_TRIMESH:
         safe_print(f"  No rendering backend available")
         return False
     
     try:
-        # Load STL mesh
         mesh = trimesh.load(stl_path)
+        mesh.fix_normals()
         
-        # Fix mesh issues
-        mesh.fix_normals()  # Ensure correct normal orientation
-        
-        # Simplify mesh if it has too many faces (for speed)
         max_faces = 50000
         if len(mesh.faces) > max_faces:
             safe_print(f"  Simplifying mesh ({len(mesh.faces)} -> {max_faces} faces)...")
             mesh = mesh.simplify_quadric_decimation(max_faces)
         
-        # Try pyrender first (better quality and more reliable)
         if HAS_PYRENDER:
             return _render_with_pyrender(mesh, thumb_path, name)
         else:
-            return _render_with_trimesh(mesh, thumb_path, name)
+            return _render_with_matplotlib(mesh, thumb_path, name)
         
     except Exception as e:
         safe_print(f"  Warning: STL thumbnail generation failed: {e}")
@@ -164,12 +156,15 @@ def _render_with_openscad(stl_path, thumb_path, name):
     import subprocess
     import tempfile
     
+    # Convert to absolute path for OpenSCAD
+    abs_stl_path = os.path.abspath(stl_path)
+    
     # Create temporary OpenSCAD file
     with tempfile.NamedTemporaryFile(mode='w', suffix='.scad', delete=False) as f:
         scad_file = f.name
         f.write(f"""// Auto-generated for thumbnail rendering
 color([233/255, 69/255, 96/255])  // #e94560
-    import("{stl_path}");
+    import("{abs_stl_path}");
 """)
     
     try:
@@ -177,11 +172,11 @@ color([233/255, 69/255, 96/255])  // #e94560
         has_xvfb = shutil.which('xvfb-run') is not None
         
         if has_xvfb:
-            # Use xvfb-run for headless rendering (most reliable)
+            # Use xvfb-run for headless preview mode (supports colors)
             cmd = [
                 'xvfb-run', '-a', '-s', '-screen 0 1024x768x24',
                 'openscad',
-                '--render',  # Force render mode
+                # NO --render flag! Preview mode supports color()
                 '--camera=1,1,1,55,0,45,0',  # Isometric-like view
                 '--autocenter',
                 '--viewall',
@@ -194,7 +189,7 @@ color([233/255, 69/255, 96/255])  // #e94560
             # Direct OpenSCAD call (for systems with display)
             cmd = [
                 'openscad',
-                '--render',  # Force render mode
+                # NO --render flag! Preview mode supports color()
                 '--camera=1,1,1,55,0,45,0',  # Isometric-like view
                 '--autocenter',
                 '--viewall',
@@ -461,18 +456,18 @@ def main():
     os.makedirs(thumbnails_dir, exist_ok=True)
     
     if HAS_OPENSCAD:
-        safe_print("Thumbnail renderer: OpenSCAD (fastest, ~0.1s per thumbnail)")
+        safe_print("Thumbnail renderer: OpenSCAD (fast, ~0.5s per thumbnail)")
     elif HAS_TRIMESH:
         if HAS_PYRENDER:
-            safe_print("Thumbnail renderer: pyrender")
+            safe_print("Thumbnail renderer: PyRender (GPU-accelerated)")
         else:
-            safe_print("Thumbnail renderer: trimesh/matplotlib")
-        safe_print("  (install openscad for 100x faster rendering: apt install openscad)")
+            safe_print("Thumbnail renderer: Matplotlib (software rendering)")
+        safe_print("  (install openscad for faster rendering: apt install openscad xvfb)")
     elif HAS_GUI:
         safe_print("FreeCADGui available but not used (prefer STL-based generation)")
     else:
         safe_print("No thumbnail generation available")
-        safe_print("  Install: apt install openscad OR pip install trimesh pillow matplotlib")
+        safe_print("  Install: apt install openscad xvfb OR pip install trimesh matplotlib pillow")
 
     # Non-recursive: only *.FCStd directly in freecad_dir
     pattern = os.path.join(freecad_dir, "*.FCStd")
