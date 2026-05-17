@@ -330,6 +330,8 @@ def build_gallery(config, models, profile):
 
     # Render detail pages
     detail_template = env.get_template("detail.html")
+    git_tag = get_git_tag()
+    git_source_url = get_git_source_url()
     for i, model in enumerate(models):
         prev_model = models[i - 1] if i > 0 else None
         next_model = models[i + 1] if i < len(models) - 1 else None
@@ -340,6 +342,8 @@ def build_gallery(config, models, profile):
             next_model=next_model,
             profile=profile,
             title=config["title"],
+            git_tag=git_tag,
+            git_source_url=git_source_url,
         )
         detail_path = os.path.join(output_dir, "view", f"{model['name']}.html")
         with open(detail_path, "w") as f:
@@ -453,6 +457,24 @@ def get_git_source_url():
         return None
     except Exception:
         return None
+
+
+def get_git_tag():
+    """Get the current git tag (latest annotated tag).
+    
+    Returns the tag name (e.g., 'v2.2.6') or 'main' as fallback.
+    """
+    try:
+        result = subprocess.run(
+            ['git', 'describe', '--tags', '--abbrev=0'],
+            capture_output=True, text=True, check=True
+        )
+        tag = result.stdout.strip()
+        if tag:
+            return tag
+    except Exception:
+        pass
+    return 'main'
 
 
 def build_discovery(config, models, profile, base_url):

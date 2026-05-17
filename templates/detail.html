@@ -188,20 +188,121 @@
       margin-top: 0.3rem;
       text-align: center;
     }
-    .no-metadata-banner {
-      background: var(--surface);
-      border: 1px solid var(--accent);
-      border-radius: 8px;
-      padding: 1rem 1.5rem;
+    .metadata-box {
+      background: #ff8c00;
+      color: #fff;
+      border-radius: 12px;
       margin-bottom: 1.5rem;
-      color: var(--accent);
-      font-size: 0.85rem;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(255, 140, 0, 0.3);
     }
-    .no-metadata-banner code {
-      background: var(--bg);
+    .metadata-box-header {
+      padding: 1rem 1.5rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+      transition: background 0.2s;
+    }
+    .metadata-box-header:hover {
+      background: #ff9d1a;
+    }
+    .metadata-box-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .metadata-box-icon {
+      font-size: 0.8rem;
+      transition: transform 0.3s;
+    }
+    .metadata-box-icon.expanded {
+      transform: rotate(90deg);
+    }
+    .metadata-box-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+      background: rgba(0, 0, 0, 0.1);
+    }
+    .metadata-box-content.expanded {
+      max-height: 1000px;
+    }
+    .metadata-box-inner {
+      padding: 1.5rem;
+      line-height: 1.6;
+    }
+    .metadata-box-inner h3 {
+      margin: 0 0 0.75rem 0;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .metadata-box-inner p {
+      margin: 0 0 1rem 0;
+      opacity: 0.95;
+    }
+    .metadata-box-inner code {
+      background: rgba(0, 0, 0, 0.2);
       padding: 0.15rem 0.4rem;
       border-radius: 4px;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
+      font-family: 'Courier New', monospace;
+    }
+    .yaml-template {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 1rem;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      position: relative;
+      overflow-x: auto;
+      margin: 1rem 0;
+      white-space: pre;
+      line-height: 1.4;
+    }
+    .yaml-comment { color: #75715e; }
+    .yaml-key { color: #66d9ef; }
+    .yaml-string { color: #e6db74; }
+    .copy-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      background: #4a4a4a;
+      color: #fff;
+      border: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    .copy-btn:hover {
+      background: #5a5a5a;
+    }
+    .copy-btn.copied {
+      background: #28a745;
+    }
+    .github-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(0, 0, 0, 0.2);
+      color: #fff;
+      text-decoration: none;
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: background 0.2s;
+      margin-top: 0.5rem;
+    }
+    .github-link:hover {
+      background: rgba(0, 0, 0, 0.3);
     }
     .license {
       padding: 0 1.5rem 1rem;
@@ -261,8 +362,53 @@
 
   <div class="container">
     {% if not model.has_metadata %}
-    <div class="no-metadata-banner">
-      No metadata found for this model. Add some by creating <code>{{ model.metadata_path }}</code>
+    <div class="metadata-box">
+      <div class="metadata-box-header" onclick="toggleMetadataBox()">
+        <div class="metadata-box-title">
+          <span class="metadata-box-icon" id="metadata-icon">▶</span>
+          <span>📝 No metadata file found - Click to learn how to add one</span>
+        </div>
+      </div>
+      <div class="metadata-box-content" id="metadata-content">
+        <div class="metadata-box-inner">
+          <h3>How to add metadata for this model</h3>
+          <p>Create a file named <code>metadata/{{ model.name }}.yaml</code> in your repository with the following content:</p>
+          
+          <div class="yaml-template">
+            <button class="copy-btn" onclick="copyYamlTemplate(event)">Copy</button><span class="yaml-comment"># yaml-language-server: $schema=https://raw.githubusercontent.com/schmiddim/freecad-action/refs/tags/{{ git_tag }}/schemas/meta.schema.json</span>
+
+<span class="yaml-key">title</span>: <span class="yaml-string">"{{ model.title }}"</span>
+<span class="yaml-key">description</span>: <span class="yaml-string">"Add your description here"</span>
+<span class="yaml-key">tags</span>:
+  - <span class="yaml-string">tag1</span>
+  - <span class="yaml-string">tag2</span>
+<span class="yaml-key">categories</span>:
+  - <span class="yaml-string">category1</span>
+<span class="yaml-key">license</span>: <span class="yaml-string">"CC-BY-SA-4.0"</span>
+
+<span class="yaml-comment"># Optional: links to maker platforms</span>
+<span class="yaml-comment"># links:</span>
+<span class="yaml-comment">#   makerworld: "https://..."</span>
+<span class="yaml-comment">#   printables: "https://..."</span>
+<span class="yaml-comment">#   thingiverse: "https://..."</span>
+
+<span class="yaml-comment"># Optional: additional images (place in metadata/images/{{ model.name }}/)</span>
+<span class="yaml-comment"># images:</span>
+<span class="yaml-comment">#   - filename: "photo1.jpg"</span>
+<span class="yaml-comment">#     caption: "Optional caption"</span></div>
+
+          {% if git_source_url %}
+          <p><strong>Quick option:</strong> Create the file directly on GitHub:</p>
+          <a href="{{ git_source_url }}/new/master?filename=metadata/{{ model.name }}.yaml" target="_blank" rel="noopener" class="github-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/>
+            </svg>
+            Create {{ model.name }}.yaml on GitHub
+          </a>
+          <p style="font-size: 0.8rem; margin-top: 0.5rem; opacity: 0.9;">After clicking the link, paste the YAML template above into the GitHub editor and commit the file.</p>
+          {% endif %}
+        </div>
+      </div>
     </div>
     {% endif %}
 
@@ -404,6 +550,61 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix();
   renderer.setSize(w, h);
 });
+</script>
+
+<script>
+// Metadata box toggle
+function toggleMetadataBox() {
+  const content = document.getElementById('metadata-content');
+  const icon = document.getElementById('metadata-icon');
+  
+  if (content.classList.contains('expanded')) {
+    content.classList.remove('expanded');
+    icon.classList.remove('expanded');
+    icon.textContent = '▶';
+  } else {
+    content.classList.add('expanded');
+    icon.classList.add('expanded');
+    icon.textContent = '▼';
+  }
+}
+
+// Copy YAML template to clipboard
+function copyYamlTemplate(event) {
+  event.stopPropagation();
+  const btn = event.target;
+  const yamlTemplate = btn.parentElement;
+  
+  // Extract plain text without HTML tags
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = yamlTemplate.innerHTML;
+  
+  // Remove the copy button from the cloned content
+  const copyBtnClone = tempDiv.querySelector('.copy-btn');
+  if (copyBtnClone) {
+    copyBtnClone.remove();
+  }
+  
+  const text = tempDiv.textContent || tempDiv.innerText;
+  
+  // Copy to clipboard
+  navigator.clipboard.writeText(text).then(() => {
+    const originalText = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.classList.remove('copied');
+    }, 2000);
+  }).catch(err => {
+    console.error('Failed to copy:', err);
+    btn.textContent = '✗ Failed';
+    setTimeout(() => {
+      btn.textContent = 'Copy';
+    }, 2000);
+  });
+}
 </script>
 </body>
 </html>

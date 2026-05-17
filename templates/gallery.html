@@ -194,12 +194,6 @@
       padding: 0.15rem 0.5rem;
       border-radius: 10px;
     }
-    .no-metadata {
-      font-size: 0.7rem;
-      color: var(--accent);
-      padding: 0 1rem 0.75rem;
-      font-style: italic;
-    }
   </style>
   <script>
     // Apply saved or system theme before render to avoid flash
@@ -275,9 +269,6 @@
         <span class="card-tag">{{ tag }}</span>
         {% endfor %}
       </div>
-      {% endif %}
-      {% if not model.has_metadata %}
-      <div class="no-metadata">No metadata found — add some by creating <code>{{ model.metadata_path }}</code></div>
       {% endif %}
     </a>
     {% endfor %}
