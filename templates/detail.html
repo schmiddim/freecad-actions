@@ -168,26 +168,107 @@
       margin-bottom: 1rem;
       color: var(--muted);
     }
+    .hero-image {
+      width: 100%;
+      max-height: 500px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      object-fit: contain;
+      background: var(--viewer-bg);
+      cursor: pointer;
+      margin-bottom: 1rem;
+    }
     .images-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 1rem;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 0.75rem;
     }
-    .images-grid figure { margin: 0; }
+    .images-grid figure { 
+      margin: 0; 
+      position: relative;
+    }
     .images-grid img {
       width: 100%;
+      height: 120px;
+      object-fit: cover;
       border-radius: 8px;
-      border: 1px solid var(--border);
+      border: 2px solid var(--border);
       cursor: pointer;
-      transition: transform 0.2s;
+      transition: all 0.2s;
     }
-    .images-grid img:hover { transform: scale(1.03); }
+    .images-grid img:hover { 
+      transform: scale(1.05); 
+      border-color: var(--accent);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .images-grid img.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent);
+    }
     .images-grid figcaption {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       color: var(--muted);
-      margin-top: 0.3rem;
+      margin-top: 0.4rem;
       text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
+    .lightbox {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+    }
+    .lightbox.active {
+      display: flex;
+    }
+    .lightbox img {
+      max-width: 90%;
+      max-height: 90%;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+    .lightbox-close {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      font-size: 40px;
+      color: #fff;
+      cursor: pointer;
+      user-select: none;
+      font-weight: 300;
+    }
+    .lightbox-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 50px;
+      color: #fff;
+      cursor: pointer;
+      user-select: none;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    .lightbox-nav:hover {
+      background: rgba(0, 0, 0, 0.8);
+    }
+    .lightbox-nav.prev { left: 30px; }
+    .lightbox-nav.next { right: 30px; }
     .metadata-box {
       background: #ff8c00;
       color: #fff;
@@ -446,10 +527,11 @@
       {% if model.images %}
       <div class="images-gallery">
         <h3>Photos</h3>
+        <img id="hero-image" class="hero-image" src="../images/{{ model.name }}/{{ model.images[0].filename }}" alt="{{ model.images[0].caption or model.title }}" onclick="openLightbox(0)">
         <div class="images-grid">
           {% for img in model.images %}
           <figure>
-            <img src="../images/{{ model.name }}/{{ img.filename }}" alt="{{ img.caption or model.title }}" loading="lazy">
+            <img src="../images/{{ model.name }}/{{ img.filename }}" alt="{{ img.caption or model.title }}" loading="lazy" onclick="selectImage({{ loop.index0 }})" class="{% if loop.index0 == 0 %}active{% endif %}" data-index="{{ loop.index0 }}">
             {% if img.caption %}
             <figcaption>{{ img.caption }}</figcaption>
             {% endif %}
@@ -474,6 +556,15 @@
       {% endif %}
     </div>
   </div>
+
+  {% if model.images %}
+  <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+    <span class="lightbox-close">&times;</span>
+    <span class="lightbox-nav prev" onclick="event.stopPropagation(); navigateLightbox(-1)">&#10094;</span>
+    <img id="lightbox-img" src="" alt="">
+    <span class="lightbox-nav next" onclick="event.stopPropagation(); navigateLightbox(1)">&#10095;</span>
+  </div>
+  {% endif %}
 
 <script>
 const toggle = document.getElementById('theme-toggle');
@@ -603,6 +694,64 @@ function copyYamlTemplate(event) {
     }, 2000);
   });
 }
+
+// Image gallery functionality
+{% if model.images %}
+const images = {{ model.images | tojson }};
+const modelName = "{{ model.name }}";
+let currentImageIndex = 0;
+
+function selectImage(index) {
+  currentImageIndex = index;
+  const heroImage = document.getElementById('hero-image');
+  const thumbnails = document.querySelectorAll('.images-grid img');
+  
+  heroImage.src = `../images/${modelName}/${images[index].filename}`;
+  heroImage.alt = images[index].caption || "{{ model.title }}";
+  
+  thumbnails.forEach((thumb, i) => {
+    thumb.classList.toggle('active', i === index);
+  });
+}
+
+function openLightbox(index) {
+  currentImageIndex = index;
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightbox-img');
+  
+  lightboxImg.src = `../images/${modelName}/${images[index].filename}`;
+  lightboxImg.alt = images[index].caption || "{{ model.title }}";
+  lightbox.classList.add('active');
+  
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  const lightbox = document.getElementById('lightbox');
+  lightbox.classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function navigateLightbox(direction) {
+  currentImageIndex = (currentImageIndex + direction + images.length) % images.length;
+  const lightboxImg = document.getElementById('lightbox-img');
+  
+  lightboxImg.src = `../images/${modelName}/${images[currentImageIndex].filename}`;
+  lightboxImg.alt = images[currentImageIndex].caption || "{{ model.title }}";
+  
+  selectImage(currentImageIndex);
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+  const lightbox = document.getElementById('lightbox');
+  if (lightbox.classList.contains('active')) {
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') navigateLightbox(-1);
+    if (e.key === 'ArrowRight') navigateLightbox(1);
+  }
+});
+{% endif %}
 </script>
 </body>
 </html>

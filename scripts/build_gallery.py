@@ -247,13 +247,47 @@ def copy_assets(config, metadata_dir):
         safe_print(f"Copied {len(glob.glob(os.path.join(thumbnails_src, '*.png')))} thumbnails")
 
     # Copy metadata images
+    # Support both: metadata/images/{model_name}/ and metadata/{model_name}/
+    images_dst_base = os.path.join(output_dir, "images")
+    os.makedirs(images_dst_base, exist_ok=True)
+    
+    copied_count = 0
+    
+    # 1. Copy from metadata/images/ if it exists (preferred structure)
     images_src = os.path.join(metadata_dir, "images")
     if os.path.isdir(images_src):
-        images_dst = os.path.join(output_dir, "images")
-        if os.path.exists(images_dst):
-            shutil.rmtree(images_dst)
-        shutil.copytree(images_src, images_dst)
-        safe_print(f"Copied images from '{images_src}' to '{images_dst}'")
+        for model_dir in os.listdir(images_src):
+            model_src = os.path.join(images_src, model_dir)
+            if os.path.isdir(model_src):
+                model_dst = os.path.join(images_dst_base, model_dir)
+                if os.path.exists(model_dst):
+                    shutil.rmtree(model_dst)
+                shutil.copytree(model_src, model_dst)
+                copied_count += 1
+    
+    # 2. Also check metadata/{model_name}/ for images (fallback structure)
+    for meta_file in glob.glob(os.path.join(metadata_dir, "*.yaml")) + glob.glob(os.path.join(metadata_dir, "*.yml")):
+        model_name = os.path.splitext(os.path.basename(meta_file))[0]
+        model_img_src = os.path.join(metadata_dir, model_name)
+        
+        if os.path.isdir(model_img_src):
+            # Check if directory contains image files
+            image_files = []
+            for ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp']:
+                image_files.extend(glob.glob(os.path.join(model_img_src, f"*{ext}")))
+                image_files.extend(glob.glob(os.path.join(model_img_src, f"*{ext.upper()}")))
+            
+            if image_files:
+                model_dst = os.path.join(images_dst_base, model_name)
+                os.makedirs(model_dst, exist_ok=True)
+                
+                for img_file in image_files:
+                    shutil.copy(img_file, model_dst)
+                
+                copied_count += 1
+    
+    if copied_count > 0:
+        safe_print(f"Copied images for {copied_count} model(s) to '{images_dst_base}'")
 
 
 def find_templates_dir():
